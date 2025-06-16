@@ -1,0 +1,38 @@
+# Assets Directory
+
+This directory contains static assets for the Campaign Analyzer application.
+
+## Required Files
+
+Create the following files for complete functionality:
+
+### Icons
+- `favicon.ico` - Browser favicon (16x16, 32x32, 48x48)
+- `icon-192.png` - PWA icon for mobile (192x192)
+- `icon-512.png` - PWA icon for desktop (512x512)
+
+### Screenshots (for PWA)
+- `screenshot-wide.png` - Desktop screenshot (1280x720)
+- `screenshot-narrow.png` - Mobile screenshot (640x1136)
+
+## Icon Guidelines
+
+The icons should represent campaign analytics/dashboard themes:
+- Use blue gradient colors (#667eea to #764ba2) matching the app theme
+- Include chart/graph elements to represent analytics
+- Ensure good contrast for visibility
+- Follow PWA icon guidelines for maskable icons
+
+## Creating Icons
+
+You can use tools like:
+- Figma, Adobe Illustrator, or Sketch for vector design
+- Online favicon generators
+- PWA icon generators for proper sizing and formats
+
+## License
+
+All assets should be either:
+- Created specifically for this project
+- Licensed for commercial use
+- Public domain or Creative Commons licensed

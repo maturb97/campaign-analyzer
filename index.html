@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta Tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Multi-platform campaign analyzer for Display & Video 360, Google Ads, and Social Media campaigns. Import CSV files and generate unified insights with interactive dashboards.">
+    <meta name="keywords" content="campaign analyzer, DV360, Google Ads, social media, CSV, analytics, dashboard, marketing">
+    <meta name="author" content="Campaign Analyzer">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Multi-Platform Campaign Analyzer">
+    <meta property="og:description" content="Comprehensive analysis tool for DV360, Google Ads, and Social Media campaigns">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://maturb97.github.io/campaign-analyzer/">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Multi-Platform Campaign Analyzer">
+    <meta name="twitter:description" content="Analyze DV360, Google Ads, and Social Media campaigns with interactive dashboards">
+    
+    <!-- Title -->
+    <title>Multi-Platform Campaign Analyzer | DV360, Google Ads & Social Media Analytics</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+    
+    <!-- External CSS Files -->
+    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/components.css">
+    <link rel="stylesheet" href="./css/responsive.css">
+    
+    <!-- External JavaScript Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" defer></script>
+    
+    <!-- Application JavaScript Files -->
+    <script src="./js/app.js" defer></script>
+    <script src="./js/data-processor.js" defer></script>
+    <script src="./js/charts.js" defer></script>
+    <script src="./js/tables.js" defer></script>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1>Multi-Platform Campaign Analyzer</h1>
+            <p>Analyze campaign performance across Display & Video 360, Google Ads, and Social Media platforms</p>
+        </header>
+
+        <!-- Platform Navigation -->
+        <nav class="platform-nav" role="navigation" aria-label="Platform selection">
+            <button class="platform-btn active" data-platform="all" aria-label="Show all platforms">All Platforms</button>
+            <button class="platform-btn" data-platform="dv360" aria-label="Show DV360 campaigns">DV360</button>
+            <button class="platform-btn" data-platform="google-ads" aria-label="Show Google Ads campaigns">Google Ads</button>
+            <button class="platform-btn" data-platform="social" aria-label="Show Social Media campaigns">Social Media</button>
+        </nav>
+
+        <!-- File Upload Section -->
+        <section class="upload-section" aria-labelledby="upload-heading">
+            <h2 id="upload-heading">Upload Campaign Data</h2>
+            <div class="file-upload" id="file-drop-zone" role="button" tabindex="0" aria-label="Click or drag files to upload CSV data">
+                <input type="file" id="file-input" multiple accept=".csv" aria-label="Select CSV files">
+                <div>
+                    <h3>📊 Drop CSV files here or click to browse</h3>
+                    <p>Supports multiple files from DV360, Google Ads, and Social Media platforms</p>
+                </div>
+            </div>
+            <div id="file-status" role="status" aria-live="polite"></div>
+        </section>
+
+        <!-- Date Filter Section -->
+        <section id="date-filter-section" class="upload-section" style="display: none;" aria-labelledby="filter-heading">
+            <h2 id="filter-heading">Date Range Filter</h2>
+            <div class="date-filter">
+                <label for="start-date">Start Date:</label>
+                <input type="date" id="start-date" aria-label="Select start date for filtering">
+                
+                <label for="end-date">End Date:</label>
+                <input type="date" id="end-date" aria-label="Select end date for filtering">
+                
+                <button id="apply-filter" class="filter-btn" aria-label="Apply date filter">Apply Filter</button>
+                <button id="clear-filter" class="filter-btn clear" aria-label="Clear date filter">Clear Filter</button>
+            </div>
+        </section>
+
+        <!-- Analytics Dashboard -->
+        <main id="analytics-dashboard" style="display: none;" role="main">
+            <!-- Key Metrics Grid -->
+            <section class="metrics-grid" aria-labelledby="metrics-heading">
+                <h2 id="metrics-heading" class="sr-only">Key Performance Metrics</h2>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="total-impressions">0</div>
+                    <div class="metric-label">Total Impressions</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="total-clicks">0</div>
+                    <div class="metric-label">Total Clicks</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="total-revenue">$0</div>
+                    <div class="metric-label">Total Revenue</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="overall-ctr">0%</div>
+                    <div class="metric-label">Overall CTR</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="total-conversions">0</div>
+                    <div class="metric-label">Total Conversions</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="conversion-rate">0%</div>
+                    <div class="metric-label">Conversion Rate</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="post-click-conversions">0</div>
+                    <div class="metric-label">Post-Click Conversions</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="post-view-conversions">0</div>
+                    <div class="metric-label">Post-View Conversions</div>
+                </div>
+            </section>
+
+            <!-- Dashboard Charts -->
+            <div class="dashboard">
+                <!-- Time Series Chart -->
+                <section class="card" aria-labelledby="timeseries-heading">
+                    <h3 id="timeseries-heading">Performance Over Time</h3>
+                    <div class="comparison-toggle">
+                        <button class="toggle-btn active" data-metric="impressions">Impressions</button>
+                        <button class="toggle-btn" data-metric="clicks">Clicks</button>
+                        <button class="toggle-btn" data-metric="revenue">Revenue</button>
+                        <button class="toggle-btn" data-metric="ctr">CTR</button>
+                        <button class="toggle-btn" data-metric="conversions">Conversions</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="time-series-chart" aria-label="Time series chart showing performance metrics over time"></canvas>
+                    </div>
+                </section>
+
+                <!-- Audience Performance Chart -->
+                <section class="card" aria-labelledby="audience-heading">
+                    <h3 id="audience-heading">Audience Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="audience-chart" aria-label="Audience performance comparison chart"></canvas>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Performance Tables -->
+            <div class="dashboard">
+                <!-- Campaign Performance Table -->
+                <section class="card" aria-labelledby="campaign-table-heading">
+                    <h3 id="campaign-table-heading">Campaign Performance</h3>
+                    <div class="table-container">
+                        <table id="campaign-table" role="table" aria-label="Campaign performance data">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Campaign Type</th>
+                                    <th scope="col">Platform</th>
+                                    <th scope="col">Impressions</th>
+                                    <th scope="col">Clicks</th>
+                                    <th scope="col">Revenue</th>
+                                    <th scope="col">CTR</th>
+                                    <th scope="col">CPM</th>
+                                    <th scope="col">Conversions</th>
+                                    <th scope="col">Conv. Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="campaign-table-body">
+                                <!-- Data populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Audience Analysis Table -->
+                <section class="card" aria-labelledby="audience-table-heading">
+                    <h3 id="audience-table-heading">Audience Analysis</h3>
+                    <div class="table-container">
+                        <table id="audience-table" role="table" aria-label="Audience analysis data">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Audience Type</th>
+                                    <th scope="col">Impressions</th>
+                                    <th scope="col">Clicks</th>
+                                    <th scope="col">CTR</th>
+                                    <th scope="col">CPM</th>
+                                    <th scope="col">Viewability</th>
+                                    <th scope="col">Conversions</th>
+                                    <th scope="col">Conv. Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audience-table-body">
+                                <!-- Data populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Audience Segment Analysis -->
+            <div class="dashboard">
+                <!-- First Party Segments -->
+                <section class="card" aria-labelledby="fp-segments-heading">
+                    <h3 id="fp-segments-heading">1st Party Audience Segments</h3>
+                    <div class="chart-container">
+                        <canvas id="fp-segments-chart" aria-label="First party audience segments performance chart"></canvas>
+                    </div>
+                    <div class="table-container">
+                        <table id="fp-segments-table" role="table" aria-label="First party segments performance data">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Segment</th>
+                                    <th scope="col">Impressions</th>
+                                    <th scope="col">Clicks</th>
+                                    <th scope="col">CTR</th>
+                                    <th scope="col">CPM</th>
+                                    <th scope="col">Viewability</th>
+                                    <th scope="col">Conv. Rate</th>
+                                    <th scope="col">Post-Click Conv.</th>
+                                    <th scope="col">Post-View Conv.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fp-segments-table-body">
+                                <!-- Data populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Converged Segments -->
+                <section class="card" aria-labelledby="cnv-segments-heading">
+                    <h3 id="cnv-segments-heading">Converged Audience Segments</h3>
+                    <div class="chart-container">
+                        <canvas id="cnv-segments-chart" aria-label="Converged audience segments performance chart"></canvas>
+                    </div>
+                    <div class="table-container">
+                        <table id="cnv-segments-table" role="table" aria-label="Converged segments performance data">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Segment</th>
+                                    <th scope="col">Impressions</th>
+                                    <th scope="col">Clicks</th>
+                                    <th scope="col">CTR</th>
+                                    <th scope="col">CPM</th>
+                                    <th scope="col">Viewability</th>
+                                    <th scope="col">Conv. Rate</th>
+                                    <th scope="col">Post-Click Conv.</th>
+                                    <th scope="col">Post-View Conv.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cnv-segments-table-body">
+                                <!-- Data populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Audience Comparison -->
+            <section class="card" aria-labelledby="comparison-heading">
+                <h3 id="comparison-heading">1st Party vs Converged Audience Comparison</h3>
+                
+                <!-- Comparison Cards -->
+                <div class="audience-comparison">
+                    <div class="audience-card">
+                        <h4>1st Party Audiences</h4>
+                        <div class="audience-metrics">
+                            <div class="audience-metric">
+                                <div class="value" id="fp-impressions">0</div>
+                                <div class="label">Impressions</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-ctr">0%</div>
+                                <div class="label">CTR</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-cpm">$0</div>
+                                <div class="label">CPM</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-viewability">0%</div>
+                                <div class="label">Viewability</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-conversions">0</div>
+                                <div class="label">Conversions</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-conv-rate">0%</div>
+                                <div class="label">Conv. Rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="audience-card">
+                        <h4>Converged Audiences</h4>
+                        <div class="audience-metrics">
+                            <div class="audience-metric">
+                                <div class="value" id="conv-impressions">0</div>
+                                <div class="label">Impressions</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-ctr">0%</div>
+                                <div class="label">CTR</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-cpm">$0</div>
+                                <div class="label">CPM</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-viewability">0%</div>
+                                <div class="label">Viewability</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-conversions">0</div>
+                                <div class="label">Conversions</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-conv-rate">0%</div>
+                                <div class="label">Conv. Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Radar Chart -->
+                <div class="chart-container">
+                    <canvas id="audience-comparison-chart" aria-label="Radar chart comparing first party and converged audience performance"></canvas>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Screen Reader Only Content -->
+    <div class="sr-only">
+        <h1>Multi-Platform Campaign Analyzer</h1>
+        <p>This application provides comprehensive analysis of digital advertising campaigns across multiple platforms including Display & Video 360, Google Ads, and Social Media platforms.</p>
+    </div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        // Register service worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            console.log('New Service Worker found, installing...');
+                            
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('New Service Worker installed, reload to activate');
+                                    // Optionally show update notification to user
+                                    showUpdateNotification();
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+
+        // Show update notification
+        function showUpdateNotification() {
+            const statusDiv = document.getElementById('file-status');
+            if (statusDiv && window.CampaignAnalyzer) {
+                window.CampaignAnalyzer.showStatusMessage(
+                    'App update available! Refresh to get the latest version.',
+                    'info'
+                );
+            }
+        }
+
+        // Install prompt handling
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('Install prompt can be shown');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button or banner
+            showInstallPrompt();
+        });
+
+        function showInstallPrompt() {
+            // Create install button if it doesn't exist
+            if (!document.getElementById('install-btn')) {
+                const installBtn = document.createElement('button');
+                installBtn.id = 'install-btn';
+                installBtn.textContent = '📱 Install App';
+                installBtn.className = 'filter-btn';
+                installBtn.style.position = 'fixed';
+                installBtn.style.bottom = '20px';
+                installBtn.style.right = '20px';
+                installBtn.style.zIndex = '1000';
+                
+                installBtn.addEventListener('click', () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then((choiceResult) => {
+                            console.log('Install prompt result:', choiceResult.outcome);
+                            deferredPrompt = null;
+                            installBtn.remove();
+                        });
+                    }
+                });
+                
+                document.body.appendChild(installBtn);
+            }
+        }
+
+        // Handle app installation
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App was installed successfully');
+            const installBtn = document.getElementById('install-btn');
+            if (installBtn) {
+                installBtn.remove();
+            }
+        });
+    </script>
+</body>
+</html>

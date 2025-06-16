@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://maturb97.github.io/campaign-analyzer/sitemap.xml
+
+# Allow crawling of main assets
+Allow: /css/
+Allow: /js/
+Allow: /assets/
+Allow: /manifest.json
+
+# Disallow service worker (not needed for SEO)
+Disallow: /sw.js
+
+# Crawl delay (optional)
+Crawl-delay: 1
