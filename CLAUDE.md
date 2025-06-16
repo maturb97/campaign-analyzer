@@ -121,33 +121,70 @@ campaign-analyzer/
 - Safari 12+
 - Edge 79+
 
-## Latest Updates (Frontend Rebuild)
+## Latest Updates (Comprehensive Enhancement - June 2025)
 
-### ✅ **Major UI/UX Redesign (June 2025)**
+### 🎯 **Complete Campaign Analyzer Overhaul (June 16, 2025)**
+
+#### **Enhanced Chart System (Charts A-F)**
+- **Chart A**: Daily Impressions + CTR dual-axis visualization with professional formatting
+- **Chart B**: Daily Revenue + switchable conversion rates (post-click/post-view toggle)
+- **Charts E&F**: Enhanced segment charts with Revenue bars and switchable metric lines:
+  - CTR, Post-Click/Post-View conversion rates, Cost Per Order, Cost Per Lead
+  - Interactive toggle buttons for seamless metric switching
+  - Full-width responsive design for better data visualization
+
+#### **Advanced Filtering & Business Intelligence**
+- **B2C/B2B Campaign Detection**: Automatic campaign type detection from campaign names
+- **Business Type Navigation**: New filtering system to analyze B2B vs B2C performance
+- **Enhanced Audience Categorization**: Improved 1P vs Converged detection logic
+- **Multi-dimensional Filtering**: Platform + Business Type + Date range combinations
+
+#### **Floodlight Integration & Cost Analysis**
+- **Enhanced Cost Per Order/Lead Calculations**: Now properly filters floodlight activities by name
+- **Activity-based Conversions**: Separates "order"/"purchase" from "lead"/"signup" conversions
+- **Accurate Attribution**: Revenue and conversions matched to specific floodlight activities
+- **Comprehensive Activity Tracking**: Full integration with existing floodlight activity tables
+
+#### **User Experience Improvements**
+- **Fixed File Upload**: Reliable click-to-import functionality restored
+- **Enhanced Text Visibility**: Improved contrast and CSS fallbacks for all browsers
+- **Professional Card Design**: PLN currency moved to descriptions, cleaner value display
+- **Interactive Chart Controls**: Smooth metric switching with visual feedback
+- **Full-width Tables**: Campaign and audience tables now utilize full screen space
+
+#### **Technical Architecture Enhancements**
+- **Dual-axis Chart System**: Professional Chart.js implementation with proper scaling
+- **State Management**: Enhanced filtering system with business type support
+- **Performance Optimization**: Efficient chart rendering and data processing
+- **Backward Compatibility**: All changes maintain existing functionality
+
+### ✅ **Previous Major Updates**
+
+#### **Major UI/UX Redesign (June 2025)**
 - **Complete CSS overhaul** with modern CSS custom properties and glassmorphism effects
 - **Enhanced responsive design** with mobile-first approach and dark mode support
 - **Improved accessibility** with ARIA labels, high contrast mode, and reduced motion support
 - **Modern component styling** with hover animations, shadows, and visual hierarchy
 
-### ✅ **Enhanced Metrics & Analytics**
+#### **Enhanced Metrics & Analytics**
 - **Updated conversion rate calculations** to use clicks instead of impressions as denominator
 - **Added new cost metrics**: CPC (Cost Per Click) and CPA (Cost Per Acquisition)
 - **Separate tracking** for post-click and post-view conversion rates
 - **Currency conversion** from USD to PLN throughout the entire application
 
-### ✅ **Advanced Table Features**
+#### **Advanced Table Features**
 - **Bidirectional sorting** (A-Z, Z-A) on all table columns with visual indicators
 - **Smart data type detection** for proper sorting of numbers, currency, and percentages
 - **Revenue-based sorting** as default for all tables (highest to lowest)
 - **Enhanced table styling** with modern hover effects and better readability
 
-### ✅ **Floodlight Activities Tracking**
+#### **Floodlight Activities Tracking**
 - **Comprehensive floodlight activity detection** for DV360 campaigns
 - **Dedicated floodlight activities table** with performance metrics
 - **Activity grouping** (Purchase Actions, Lead Generation, Content Engagement, etc.)
 - **Tag-based tracking** with campaign association and conversion analysis
 
-### ✅ **Chart Improvements**
+#### **Chart Improvements**
 - **Revenue-based sorting** for all chart visualizations
 - **PLN currency formatting** in tooltips and axis labels
 - **Enhanced chart containers** with modern styling and responsive behavior
