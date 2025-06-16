@@ -1,10 +1,10 @@
 # Multi-Platform Campaign Analyzer
 
-A comprehensive web-based tool for analyzing digital advertising campaigns across Display & Video 360 (DV360), Google Ads, and Social Media platforms.
+A comprehensive web-based tool for analyzing digital advertising campaigns across Display & Video 360 (DV360), Google Ads, and Social Media platforms with modern design and enhanced analytics capabilities.
 
 ## Overview
 
-This project is a single HTML file application that provides unified campaign performance analysis and reporting capabilities. It allows marketers and analysts to import CSV data from multiple advertising platforms and generate consolidated insights through interactive dashboards, charts, and detailed tables.
+This project is a professional Progressive Web App (PWA) that provides unified campaign performance analysis and reporting capabilities. It features a modular architecture with modern styling, enhanced metrics calculation, and comprehensive floodlight activity tracking. The application allows marketers and analysts to import CSV data from multiple advertising platforms and generate consolidated insights through interactive dashboards, charts, and detailed tables.
 
 ## Key Features
 
@@ -20,17 +20,20 @@ This project is a single HTML file application that provides unified campaign pe
 - Standardized metric calculations across platforms
 
 ### Analytics Dashboard
-- **Key Performance Metrics**: Impressions, clicks, revenue, conversions, CTR, CPM, conversion rates
-- **Time Series Analysis**: Interactive charts with metric switching (impressions, clicks, revenue, CTR, conversions)
-- **Platform Comparison**: Side-by-side performance analysis
-- **Audience Segmentation**: First-party vs. converged audience analysis
+- **Enhanced Performance Metrics**: Impressions, clicks, revenue (PLN), conversions, CTR, CPM, CPC, CPA
+- **Advanced Conversion Tracking**: Post-click and post-view conversion rates calculated from clicks
+- **Time Series Analysis**: Interactive charts with metric switching, sorted by revenue (highest to lowest)
+- **Platform Comparison**: Side-by-side performance analysis with enhanced visualizations
+- **Audience Segmentation**: First-party vs. converged audience analysis with detailed metrics
+- **Floodlight Activities**: Comprehensive tracking and analysis of DV360 conversion activities
 
 ### Reporting Features
-- **Campaign Performance Table**: Detailed breakdown by campaign type
-- **Audience Analysis Table**: Performance metrics by audience segments
-- **First-Party Segments**: Dedicated analysis for 1P audiences
-- **Converged Segments**: Lookalike and similar audience performance
-- **Visual Charts**: Bar charts, line charts, doughnut charts, and radar charts
+- **Campaign Performance Table**: Revenue-sorted breakdown with CPC/CPA metrics and bidirectional sorting
+- **Audience Analysis Table**: Enhanced performance metrics with smart sorting capabilities
+- **First-Party Segments**: Dedicated analysis with conversion rate calculations from clicks
+- **Converged Segments**: Lookalike and similar audience performance with enhanced metrics
+- **Floodlight Activities Table**: Dedicated tracking of conversion activities with grouping and tagging
+- **Visual Charts**: Modern, responsive charts with PLN currency formatting and revenue-based sorting
 
 ### Data Filtering
 - Date range filtering
@@ -39,18 +42,37 @@ This project is a single HTML file application that provides unified campaign pe
 
 ## Technical Stack
 
-- **Frontend**: Pure HTML5, CSS3, JavaScript (ES6+)
-- **Charting**: Chart.js library for interactive visualizations
-- **CSV Processing**: PapaParse library for robust CSV parsing
-- **Styling**: Modern CSS with gradients, glassmorphism effects, and responsive design
+- **Frontend**: Modular HTML5, CSS3, JavaScript (ES6+) architecture
+- **Styling**: CSS custom properties system with glassmorphism effects and modern design
+- **Charting**: Chart.js library with enhanced PLN formatting and revenue-based sorting
+- **CSV Processing**: PapaParse library with enhanced platform detection
+- **PWA Features**: Service Worker, Web App Manifest, offline functionality
+- **Responsive Design**: Mobile-first approach with dark mode support and accessibility features
 
 ## File Structure
 
 ```
 campaign-analyzer/
-├── Cross-platfrom campaign analyzer.html  # Main application file
-├── CLAUDE.md                              # Project documentation
-└── README.md                              # GitHub Pages documentation
+├── index.html                  # Main application page
+├── manifest.json               # PWA configuration
+├── sw.js                      # Service worker for offline functionality
+├── css/
+│   ├── styles.css             # Main styles with CSS custom properties
+│   ├── components.css         # Interactive components and modern styling
+│   └── responsive.css         # Mobile-responsive design with accessibility
+├── js/
+│   ├── app.js                # Core application logic and dashboard updates
+│   ├── data-processor.js     # CSV processing with floodlight activity extraction
+│   ├── charts.js             # Chart.js visualizations with PLN formatting
+│   └── tables.js             # Table rendering with bidirectional sorting
+├── assets/
+│   ├── favicon.ico           # Browser favicon
+│   ├── icon-192.png          # PWA icon (192x192)
+│   └── icon-512.png          # PWA icon (512x512)
+├── CLAUDE.md                 # Development documentation
+├── README.md                 # GitHub Pages documentation
+├── robots.txt                # SEO crawler instructions
+└── sitemap.xml               # Site structure for search engines
 ```
 
 ## Usage Instructions
@@ -69,7 +91,7 @@ campaign-analyzer/
 **DV360:**
 - Date, Campaign, Line Item, Impressions, Clicks, Revenue (Adv Currency)
 - Active View: Viewable Impressions, Post-Click Conversions, Post-View Conversions
-- Total Conversions
+- Total Conversions, Floodlight Activity, Floodlight Activity Group, Activity ID
 
 **Google Ads:**
 - Date, Campaign, Ad Group, Impressions, Clicks, Cost
@@ -82,8 +104,13 @@ campaign-analyzer/
 ## Key Metrics Calculated
 
 - **CTR (Click-Through Rate)**: Clicks ÷ Impressions × 100
-- **CPM (Cost Per Mille)**: Cost ÷ Impressions × 1000
-- **Conversion Rate**: Conversions ÷ Impressions × 100
+- **CPM (Cost Per Mille)**: Cost ÷ Impressions × 1000 (in PLN)
+- **CPC (Cost Per Click)**: Cost ÷ Clicks (in PLN)
+- **Post-Click Conversion Rate**: Post-Click Conversions ÷ Clicks × 100
+- **Post-View Conversion Rate**: Post-View Conversions ÷ Clicks × 100
+- **Overall Conversion Rate**: Total Conversions ÷ Clicks × 100
+- **CPA Post-Click**: Cost ÷ Post-Click Conversions (in PLN)
+- **CPA Post-View**: Cost ÷ Post-View Conversions (in PLN)
 - **Viewability**: Viewable Impressions ÷ Total Impressions × 100
 - **ROAS (Return on Ad Spend)**: Revenue ÷ Cost
 
@@ -94,8 +121,39 @@ campaign-analyzer/
 - Safari 12+
 - Edge 79+
 
-## Recent Fixes & Improvements
+## Latest Updates (Frontend Rebuild)
 
+### ✅ **Major UI/UX Redesign (June 2025)**
+- **Complete CSS overhaul** with modern CSS custom properties and glassmorphism effects
+- **Enhanced responsive design** with mobile-first approach and dark mode support
+- **Improved accessibility** with ARIA labels, high contrast mode, and reduced motion support
+- **Modern component styling** with hover animations, shadows, and visual hierarchy
+
+### ✅ **Enhanced Metrics & Analytics**
+- **Updated conversion rate calculations** to use clicks instead of impressions as denominator
+- **Added new cost metrics**: CPC (Cost Per Click) and CPA (Cost Per Acquisition)
+- **Separate tracking** for post-click and post-view conversion rates
+- **Currency conversion** from USD to PLN throughout the entire application
+
+### ✅ **Advanced Table Features**
+- **Bidirectional sorting** (A-Z, Z-A) on all table columns with visual indicators
+- **Smart data type detection** for proper sorting of numbers, currency, and percentages
+- **Revenue-based sorting** as default for all tables (highest to lowest)
+- **Enhanced table styling** with modern hover effects and better readability
+
+### ✅ **Floodlight Activities Tracking**
+- **Comprehensive floodlight activity detection** for DV360 campaigns
+- **Dedicated floodlight activities table** with performance metrics
+- **Activity grouping** (Purchase Actions, Lead Generation, Content Engagement, etc.)
+- **Tag-based tracking** with campaign association and conversion analysis
+
+### ✅ **Chart Improvements**
+- **Revenue-based sorting** for all chart visualizations
+- **PLN currency formatting** in tooltips and axis labels
+- **Enhanced chart containers** with modern styling and responsive behavior
+- **Improved data visualization** with better color schemes and readability
+
+### ✅ **Previous Fixes & Improvements**
 - ✅ Removed duplicate function definitions
 - ✅ Fixed missing `filterDataByPlatform()` function
 - ✅ Added division by zero protection for all calculations
@@ -105,12 +163,31 @@ campaign-analyzer/
 
 ## Development Notes
 
-This application is designed to be self-contained and portable. All dependencies are loaded via CDN, making it easy to deploy on any web server or use locally. The code follows modern JavaScript practices with proper error handling and responsive design principles.
+This application features a modular architecture with separation of concerns across CSS, JavaScript modules, and PWA components. All dependencies are loaded via CDN for portability. The codebase follows modern web development practices with:
+
+- **CSS Custom Properties** for consistent theming and easy maintenance
+- **ES6+ JavaScript modules** for better code organization and reusability
+- **Progressive enhancement** for accessibility and performance
+- **Mobile-first responsive design** with graceful degradation
+- **Comprehensive error handling** and data validation
+- **SEO optimization** with proper meta tags, sitemap, and robots.txt
+
+## Deployment
+
+The application is deployed as a GitHub Pages site with:
+- **Continuous deployment** from the main branch
+- **PWA capabilities** for offline use and app installation
+- **SEO optimization** for search engine visibility
+- **Performance optimization** with efficient asset loading
+
+**Live Demo**: [https://maturb97.github.io/campaign-analyzer/](https://maturb97.github.io/campaign-analyzer/)
 
 ## Future Enhancements
 
-- Additional platform integrations (TikTok Ads, Pinterest, etc.)
-- Advanced filtering options (geographic, demographic)
-- Export functionality for reports and charts
-- Real-time API connections for live data
-- Mobile-optimized interface improvements
+- Additional platform integrations (TikTok Ads, Pinterest, Snapchat, etc.)
+- Advanced filtering options (geographic, demographic, device targeting)
+- Export functionality for reports and charts (PDF, Excel, PowerPoint)
+- Real-time API connections for live data streaming
+- Advanced floodlight activity analysis with funnel visualization
+- Custom dashboard layouts and saved views
+- Team collaboration features and shared reports
