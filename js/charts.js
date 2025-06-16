@@ -92,7 +92,7 @@ function updateTimeSeriesChart() {
                             const value = context.parsed.y;
                             
                             if (label.includes('Revenue')) {
-                                return `${label}: $${value.toLocaleString()}`;
+                                return `${label}: ${value.toLocaleString()} PLN`;
                             } else if (label.includes('CTR')) {
                                 return `${label}: ${value.toFixed(2)}%`;
                             } else {
@@ -167,7 +167,7 @@ function setupTimeSeriesToggle(impressions, clicks, revenue, ctr, conversions) {
                     newData = revenue;
                     label = 'Revenue';
                     color = '#2ecc71';
-                    yAxisTitle = 'Revenue ($)';
+                    yAxisTitle = 'Revenue (PLN)';
                     break;
                 case 'ctr':
                     newData = ctr;
@@ -340,18 +340,22 @@ function updateAudienceChart() {
  * Create segment chart (used for both 1P and Converged segments)
  */
 function createSegmentChart(canvasId, segmentData, title) {
-    const segments = Object.keys(segmentData).slice(0, 10); // Top 10 segments
+    // Sort segments by revenue (highest to lowest) and take top 10
+    const sortedSegments = Object.entries(segmentData)
+        .sort(([,a], [,b]) => b.revenue - a.revenue)
+        .slice(0, 10);
     
-    if (segments.length === 0) {
+    if (sortedSegments.length === 0) {
         console.log(`No segments available for ${canvasId}`);
         return;
     }
     
-    const ctrs = segments.map(segment => {
-        const data = segmentData[segment];
+    const segments = sortedSegments.map(([segment, data]) => segment);
+    const ctrs = sortedSegments.map(([segment, data]) => {
         return data.impressions > 0 ? (data.clicks / data.impressions * 100) : 0;
     });
-    const impressions = segments.map(segment => segmentData[segment].impressions);
+    const impressions = sortedSegments.map(([segment, data]) => data.impressions);
+    const revenues = sortedSegments.map(([segment, data]) => data.revenue);
     
     const ctx = document.getElementById(canvasId)?.getContext('2d');
     if (!ctx) {
@@ -619,7 +623,7 @@ function updateAudienceMetricCards(fpMetrics, convMetrics) {
     const fpElements = {
         'fp-impressions': fpMetrics.impressions.toLocaleString(),
         'fp-ctr': fpMetrics.ctr.toFixed(3) + '%',
-        'fp-cpm': '$' + fpMetrics.cpm.toFixed(2),
+        'fp-cpm': fpMetrics.cpm.toFixed(2) + ' PLN',
         'fp-viewability': fpMetrics.viewability.toFixed(1) + '%',
         'fp-conversions': fpMetrics.conversions.toLocaleString(),
         'fp-conv-rate': fpMetrics.conversionRate.toFixed(4) + '%'
@@ -629,7 +633,7 @@ function updateAudienceMetricCards(fpMetrics, convMetrics) {
     const convElements = {
         'conv-impressions': convMetrics.impressions.toLocaleString(),
         'conv-ctr': convMetrics.ctr.toFixed(3) + '%',
-        'conv-cpm': '$' + convMetrics.cpm.toFixed(2),
+        'conv-cpm': convMetrics.cpm.toFixed(2) + ' PLN',
         'conv-viewability': convMetrics.viewability.toFixed(1) + '%',
         'conv-conversions': convMetrics.conversions.toLocaleString(),
         'conv-conv-rate': convMetrics.conversionRate.toFixed(4) + '%'

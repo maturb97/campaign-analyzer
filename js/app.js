@@ -224,6 +224,7 @@ function updateDashboard() {
         window.Tables.updateCampaignTable();
         window.Tables.updateAudienceTable();
         window.Tables.updateAudienceSegmentTables();
+        window.Tables.updateFloodlightActivities();
     }
     
     if (window.Charts) {
@@ -296,7 +297,7 @@ function calculateMetrics(data) {
         ctr: totals.impressions > 0 ? (totals.clicks / totals.impressions * 100) : 0,
         cpm: totals.impressions > 0 ? (totals.revenue / totals.impressions * 1000) : 0,
         viewability: totals.impressions > 0 ? (totals.viewableImpressions / totals.impressions * 100) : 0,
-        conversionRate: totals.impressions > 0 ? (totals.conversions / totals.impressions * 100) : 0
+        conversionRate: totals.clicks > 0 ? (totals.conversions / totals.clicks * 100) : 0
     };
 }
 

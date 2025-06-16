@@ -254,6 +254,11 @@ function processDV360Data(data) {
         PostViewConversions: parseFloat(row['Post-View Conversions'] || 0),
         TotalConversions: parseFloat(row['Total Conversions'] || 0),
         
+        // Floodlight activities tracking
+        FloodlightActivity: extractFloodlightActivity(row),
+        FloodlightGroup: extractFloodlightGroup(row),
+        FloodlightTag: extractFloodlightTag(row),
+        
         // Determine audience type and segment
         AudienceType: determineAudienceType(row['Line Item']),
         AudienceSegment: extractAudienceSegment(row['Line Item']),
@@ -446,6 +451,107 @@ function extractCampaignType(campaign) {
     return name.length > 20 ? name.substring(0, 20) + '...' : name;
 }
 
+/**
+ * Extract floodlight activity from DV360 data
+ */
+function extractFloodlightActivity(row) {
+    // Check for floodlight activity in various possible fields
+    const floodlightFields = [
+        'Floodlight Activity',
+        'Conversion Activity',
+        'Activity',
+        'Floodlight Activity Name',
+        'Conversion Event'
+    ];
+    
+    for (const field of floodlightFields) {
+        if (row[field] && row[field].trim() !== '' && row[field] !== 'null') {
+            return row[field].trim();
+        }
+    }
+    
+    // Check line item for floodlight activity patterns
+    const lineItem = row['Line Item'] || '';
+    if (lineItem.includes('FL_') || lineItem.includes('Floodlight')) {
+        // Try to extract activity name from line item
+        const match = lineItem.match(/FL_([^_\s]+)/i) || lineItem.match(/Floodlight[_\s-]+([^_\s-]+)/i);
+        if (match) {
+            return match[1];
+        }
+    }
+    
+    // Default if no floodlight activity detected
+    return 'Unknown';
+}
+
+/**
+ * Extract floodlight group from DV360 data
+ */
+function extractFloodlightGroup(row) {
+    // Check for floodlight group in various possible fields
+    const groupFields = [
+        'Floodlight Activity Group',
+        'Floodlight Group',
+        'Activity Group',
+        'Conversion Group'
+    ];
+    
+    for (const field of groupFields) {
+        if (row[field] && row[field].trim() !== '' && row[field] !== 'null') {
+            return row[field].trim();
+        }
+    }
+    
+    // Try to extract from floodlight activity if available
+    const activity = extractFloodlightActivity(row);
+    if (activity !== 'Unknown') {
+        // Common patterns for grouping activities
+        if (activity.toLowerCase().includes('purchase') || activity.toLowerCase().includes('buy')) {
+            return 'Purchase Actions';
+        } else if (activity.toLowerCase().includes('signup') || activity.toLowerCase().includes('register')) {
+            return 'Lead Generation';
+        } else if (activity.toLowerCase().includes('download') || activity.toLowerCase().includes('pdf')) {
+            return 'Content Engagement';
+        } else if (activity.toLowerCase().includes('video') || activity.toLowerCase().includes('view')) {
+            return 'Video Engagement';
+        }
+    }
+    
+    return 'General';
+}
+
+/**
+ * Extract floodlight tag from DV360 data  
+ */
+function extractFloodlightTag(row) {
+    // Check for floodlight tag/ID in various possible fields
+    const tagFields = [
+        'Floodlight Tag ID',
+        'Floodlight ID',
+        'Activity ID',
+        'Tag ID',
+        'Conversion Tag'
+    ];
+    
+    for (const field of tagFields) {
+        if (row[field] && row[field].trim() !== '' && row[field] !== 'null') {
+            return row[field].trim();
+        }
+    }
+    
+    // Generate a tag based on activity and campaign if no explicit tag
+    const activity = extractFloodlightActivity(row);
+    const campaign = row.Campaign || 'unknown';
+    
+    if (activity !== 'Unknown') {
+        // Create a simple hash-like tag from activity and campaign
+        const tagString = `${activity}_${campaign}`.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        return tagString.substring(0, 16); // Limit length
+    }
+    
+    return 'no-tag';
+}
+
 // Make functions available globally
 window.DataProcessor = {
     handleFiles,
@@ -456,5 +562,8 @@ window.DataProcessor = {
     processSocialData,
     determineAudienceType,
     extractAudienceSegment,
-    extractCampaignType
+    extractCampaignType,
+    extractFloodlightActivity,
+    extractFloodlightGroup,
+    extractFloodlightTag
 };
