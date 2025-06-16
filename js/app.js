@@ -45,7 +45,18 @@ function initializeUpload() {
     dropZone.addEventListener('click', function(e) {
         e.preventDefault();
         console.log('Drop zone clicked');
+        // Ensure the hidden input gains focus before triggering the file dialog
+        fileInput.focus();
         fileInput.click();
+    });
+
+    // Keyboard accessibility - trigger click on Enter or Space
+    dropZone.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            fileInput.focus();
+            fileInput.click();
+        }
     });
     
     // File input change
