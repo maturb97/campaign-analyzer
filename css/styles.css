@@ -369,7 +369,7 @@ p {
 }
 
 .metric-value {
-  font-size: 2.5rem;
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
   font-weight: 800;
   color: var(--primary-color);
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
