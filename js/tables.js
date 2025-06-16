@@ -42,22 +42,22 @@ function updateMetrics() {
     const cpaPostClick = totals.postClickConversions > 0 ? (totals.revenue / totals.postClickConversions) : 0;
     const cpaPostView = totals.postViewConversions > 0 ? (totals.revenue / totals.postViewConversions) : 0;
     
-    // Update metric displays with PLN currency
+    // Update metric displays - currency info moved to card descriptions
     const metricUpdates = {
         'total-impressions': totals.impressions.toLocaleString(),
         'total-clicks': totals.clicks.toLocaleString(),
-        'total-revenue': totals.revenue.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' PLN',
+        'total-revenue': totals.revenue.toLocaleString(undefined, {minimumFractionDigits: 2}),
         'overall-ctr': ctr.toFixed(3) + '%',
-        'cpm': cpm.toFixed(2) + ' PLN',
-        'cpc': cpc.toFixed(2) + ' PLN',
+        'cpm': cpm.toFixed(2),
+        'cpc': cpc.toFixed(2),
         'total-conversions': totals.totalConversions.toLocaleString(),
         'conversion-rate': overallConversionRate.toFixed(4) + '%',
         'post-click-conversions': totals.postClickConversions.toLocaleString(),
         'post-click-conversion-rate': postClickConversionRate.toFixed(4) + '%',
         'post-view-conversions': totals.postViewConversions.toLocaleString(),
         'post-view-conversion-rate': postViewConversionRate.toFixed(4) + '%',
-        'cpa-post-click': cpaPostClick.toFixed(2) + ' PLN',
-        'cpa-post-view': cpaPostView.toFixed(2) + ' PLN'
+        'cpa-post-click': cpaPostClick.toFixed(2),
+        'cpa-post-view': cpaPostView.toFixed(2)
     };
     
     Object.entries(metricUpdates).forEach(([id, value]) => {
@@ -450,8 +450,8 @@ function updateFirstPartySegments() {
         });
     });
     
-    // Create chart for 1P segments
-    window.Charts.createSegmentChart('fp-segments-chart', segmentData, '1st Party Audience Segments');
+    // Create enhanced chart for 1P segments with revenue bars and switchable metrics
+    window.Charts.createEnhancedSegmentChart('fp-segments-chart', segmentData, '1st Party Audience Segments', 'ctr');
 }
 
 /**
@@ -547,8 +547,8 @@ function updateConvergedSegments() {
         });
     });
     
-    // Create chart for converged segments
-    window.Charts.createSegmentChart('cnv-segments-chart', segmentData, 'Converged Audience Segments');
+    // Create enhanced chart for converged segments with revenue bars and switchable metrics
+    window.Charts.createEnhancedSegmentChart('cnv-segments-chart', segmentData, 'Converged Audience Segments', 'ctr');
 }
 
 /**

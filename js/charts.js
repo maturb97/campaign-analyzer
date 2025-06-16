@@ -344,9 +344,9 @@ function updateAudienceChart() {
 }
 
 /**
- * Create segment chart (used for both 1P and Converged segments)
+ * Create enhanced segment chart with Revenue bars and switchable metric lines (Charts E & F)
  */
-function createSegmentChart(canvasId, segmentData, title) {
+function createEnhancedSegmentChart(canvasId, segmentData, title, selectedMetric = 'ctr') {
     // Sort segments by revenue (highest to lowest) and take top 10
     const sortedSegments = Object.entries(segmentData)
         .sort(([,a], [,b]) => b.revenue - a.revenue)
@@ -358,11 +358,109 @@ function createSegmentChart(canvasId, segmentData, title) {
     }
     
     const segments = sortedSegments.map(([segment, data]) => segment);
+    const revenues = sortedSegments.map(([segment, data]) => data.revenue);
+    
+    // Calculate different metrics for the line
     const ctrs = sortedSegments.map(([segment, data]) => {
         return data.impressions > 0 ? (data.clicks / data.impressions * 100) : 0;
     });
-    const impressions = sortedSegments.map(([segment, data]) => data.impressions);
-    const revenues = sortedSegments.map(([segment, data]) => data.revenue);
+    
+    const postClickRates = sortedSegments.map(([segment, data]) => {
+        return data.clicks > 0 ? (data.postClickConversions / data.clicks * 100) : 0;
+    });
+    
+    const postViewRates = sortedSegments.map(([segment, data]) => {
+        return data.clicks > 0 ? (data.postViewConversions / data.clicks * 100) : 0;
+    });
+    
+    const costPerOrder = sortedSegments.map(([segment, data]) => {
+        // Calculate Cost Per Order using only floodlight activities with "order" in the name
+        let orderConversions = 0;
+        let orderRevenue = 0;
+        
+        // Get filtered data for this segment to access individual floodlight activities
+        const allData = window.CampaignAnalyzer.getFilteredData();
+        const segmentData = allData.filter(row => {
+            const audienceType = canvasId === 'fp-segments-chart' ? '1st Party' : 'Converged';
+            return row.AudienceType === audienceType && row.AudienceSegment === segment;
+        });
+        
+        // Sum conversions only from floodlight activities containing "order"
+        segmentData.forEach(row => {
+            const activity = (row.FloodlightActivity || '').toLowerCase();
+            if (activity.includes('order') || activity.includes('purchase') || activity.includes('buy')) {
+                orderConversions += (row.PostClickConversions || 0) + (row.PostViewConversions || 0);
+                orderRevenue += row.Revenue || 0;
+            }
+        });
+        
+        return orderConversions > 0 ? (orderRevenue / orderConversions) : 0;
+    });
+    
+    const costPerLead = sortedSegments.map(([segment, data]) => {
+        // Calculate Cost Per Lead using only floodlight activities with "lead" in the name
+        let leadConversions = 0;
+        let leadRevenue = 0;
+        
+        // Get filtered data for this segment to access individual floodlight activities
+        const allData = window.CampaignAnalyzer.getFilteredData();
+        const segmentData = allData.filter(row => {
+            const audienceType = canvasId === 'fp-segments-chart' ? '1st Party' : 'Converged';
+            return row.AudienceType === audienceType && row.AudienceSegment === segment;
+        });
+        
+        // Sum conversions only from floodlight activities containing "lead"
+        segmentData.forEach(row => {
+            const activity = (row.FloodlightActivity || '').toLowerCase();
+            if (activity.includes('lead') || activity.includes('signup') || activity.includes('register') || 
+                activity.includes('form') || activity.includes('contact')) {
+                leadConversions += (row.PostClickConversions || 0) + (row.PostViewConversions || 0);
+                leadRevenue += row.Revenue || 0;
+            }
+        });
+        
+        return leadConversions > 0 ? (leadRevenue / leadConversions) : 0;
+    });
+    
+    // Select data and styling based on chosen metric
+    let lineData, lineLabel, lineColor, yAxisTitle;
+    switch(selectedMetric) {
+        case 'ctr':
+            lineData = ctrs;
+            lineLabel = 'CTR (%)';
+            lineColor = '#e74c3c';
+            yAxisTitle = 'CTR (%)';
+            break;
+        case 'post-click-rate':
+            lineData = postClickRates;
+            lineLabel = 'Post-Click Conv. Rate (%)';
+            lineColor = '#f39c12';
+            yAxisTitle = 'Conversion Rate (%)';
+            break;
+        case 'post-view-rate':
+            lineData = postViewRates;
+            lineLabel = 'Post-View Conv. Rate (%)';
+            lineColor = '#9b59b6';
+            yAxisTitle = 'Conversion Rate (%)';
+            break;
+        case 'cost-per-order':
+            lineData = costPerOrder;
+            lineLabel = 'Cost Per Order (PLN)';
+            lineColor = '#27ae60';
+            yAxisTitle = 'Cost Per Order (PLN)';
+            break;
+        case 'cost-per-lead':
+            lineData = costPerLead;
+            lineLabel = 'Cost Per Lead (PLN)';
+            lineColor = '#8e44ad';
+            yAxisTitle = 'Cost Per Lead (PLN)';
+            break;
+        default:
+            lineData = ctrs;
+            lineLabel = 'CTR (%)';
+            lineColor = '#e74c3c';
+            yAxisTitle = 'CTR (%)';
+    }
     
     const ctx = document.getElementById(canvasId)?.getContext('2d');
     if (!ctx) {
@@ -384,29 +482,34 @@ function createSegmentChart(canvasId, segmentData, title) {
             labels: segments.map(s => s.length > 15 ? s.substring(0, 15) + '...' : s),
             datasets: [
                 {
-                    label: 'Impressions',
-                    data: impressions,
-                    backgroundColor: 'rgba(52, 152, 219, 0.6)',
-                    borderColor: '#3498db',
+                    label: 'Revenue (PLN)',
+                    data: revenues,
+                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                    borderColor: '#f59e0b',
                     borderWidth: 2,
                     yAxisID: 'y'
                 },
                 {
-                    label: 'CTR (%)',
-                    data: ctrs,
-                    backgroundColor: 'rgba(231, 76, 60, 0.8)',
-                    borderColor: '#e74c3c',
-                    borderWidth: 2,
+                    label: lineLabel,
+                    data: lineData,
+                    backgroundColor: lineColor + '40',
+                    borderColor: lineColor,
+                    borderWidth: 3,
                     type: 'line',
                     yAxisID: 'y1',
-                    pointRadius: 4,
-                    pointHoverRadius: 6
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.3
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
             plugins: {
                 title: {
                     display: true,
@@ -433,7 +536,11 @@ function createSegmentChart(canvasId, segmentData, title) {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
                             
-                            if (label.includes('CTR')) {
+                            if (label.includes('Revenue')) {
+                                return `${label}: ${value.toLocaleString()} PLN`;
+                            } else if (label.includes('Cost Per')) {
+                                return `${label}: ${value.toFixed(2)} PLN`;
+                            } else if (label.includes('%') || label.includes('Rate')) {
                                 return `${label}: ${value.toFixed(2)}%`;
                             } else {
                                 return `${label}: ${value.toLocaleString()}`;
@@ -446,7 +553,7 @@ function createSegmentChart(canvasId, segmentData, title) {
                 x: {
                     title: {
                         display: true,
-                        text: 'Segments'
+                        text: 'Audience Segments'
                     }
                 },
                 y: {
@@ -456,7 +563,12 @@ function createSegmentChart(canvasId, segmentData, title) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Impressions'
+                        text: 'Revenue (PLN)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' PLN';
+                        }
                     }
                 },
                 y1: {
@@ -469,7 +581,16 @@ function createSegmentChart(canvasId, segmentData, title) {
                     },
                     title: {
                         display: true,
-                        text: 'CTR (%)'
+                        text: yAxisTitle
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            if (yAxisTitle.includes('PLN')) {
+                                return value.toFixed(2) + ' PLN';
+                            } else {
+                                return value.toFixed(2) + '%';
+                            }
+                        }
                     }
                 }
             }
@@ -482,6 +603,39 @@ function createSegmentChart(canvasId, segmentData, title) {
     } else if (canvasId === 'cnv-segments-chart') {
         window.CampaignAnalyzer.setChartInstance('cnvSegmentsChart', chart);
     }
+    
+    // Store chart data for toggle functionality
+    if (canvasId === 'fp-segments-chart') {
+        window.fpSegmentChartData = {
+            segments,
+            revenues,
+            ctrs,
+            postClickRates,
+            postViewRates,
+            costPerOrder,
+            costPerLead,
+            segmentData: sortedSegments
+        };
+    } else if (canvasId === 'cnv-segments-chart') {
+        window.cnvSegmentChartData = {
+            segments,
+            revenues,
+            ctrs,
+            postClickRates,
+            postViewRates,
+            costPerOrder,
+            costPerLead,
+            segmentData: sortedSegments
+        };
+    }
+}
+
+/**
+ * Legacy create segment chart function (kept for backward compatibility)
+ */
+function createSegmentChart(canvasId, segmentData, title) {
+    // Use the enhanced version with default CTR metric
+    createEnhancedSegmentChart(canvasId, segmentData, title, 'ctr');
 }
 
 /**
@@ -626,21 +780,21 @@ function updateAudienceComparison() {
  * Update audience metric cards
  */
 function updateAudienceMetricCards(fpMetrics, convMetrics) {
-    // Update 1st Party cards
+    // Update 1st Party cards - currency info moved to card descriptions
     const fpElements = {
         'fp-impressions': fpMetrics.impressions.toLocaleString(),
         'fp-ctr': fpMetrics.ctr.toFixed(3) + '%',
-        'fp-cpm': fpMetrics.cpm.toFixed(2) + ' PLN',
+        'fp-cpm': fpMetrics.cpm.toFixed(2),
         'fp-viewability': fpMetrics.viewability.toFixed(1) + '%',
         'fp-conversions': fpMetrics.conversions.toLocaleString(),
         'fp-conv-rate': fpMetrics.conversionRate.toFixed(4) + '%'
     };
     
-    // Update Converged cards
+    // Update Converged cards - currency info moved to card descriptions
     const convElements = {
         'conv-impressions': convMetrics.impressions.toLocaleString(),
         'conv-ctr': convMetrics.ctr.toFixed(3) + '%',
-        'conv-cpm': convMetrics.cpm.toFixed(2) + ' PLN',
+        'conv-cpm': convMetrics.cpm.toFixed(2),
         'conv-viewability': convMetrics.viewability.toFixed(1) + '%',
         'conv-conversions': convMetrics.conversions.toLocaleString(),
         'conv-conv-rate': convMetrics.conversionRate.toFixed(4) + '%'
@@ -655,11 +809,492 @@ function updateAudienceMetricCards(fpMetrics, convMetrics) {
     });
 }
 
+/**
+ * Chart A: Impressions (bars) + CTR (line) - Day by Day
+ */
+function updateImpressionsAndCTRChart() {
+    const data = window.CampaignAnalyzer.getFilteredData();
+    
+    if (!data || data.length === 0) {
+        console.log('No data available for impressions and CTR chart');
+        return;
+    }
+    
+    // Group data by date
+    const dailyData = {};
+    data.forEach(row => {
+        if (!row.DateObj) return;
+        
+        const dateKey = row.DateObj.toISOString().split('T')[0];
+        if (!dailyData[dateKey]) {
+            dailyData[dateKey] = { impressions: 0, clicks: 0 };
+        }
+        dailyData[dateKey].impressions += row.Impressions || 0;
+        dailyData[dateKey].clicks += row.Clicks || 0;
+    });
+    
+    const dates = Object.keys(dailyData).sort();
+    const impressions = dates.map(date => dailyData[date].impressions);
+    const ctrs = dates.map(date => {
+        const dayData = dailyData[date];
+        return dayData.impressions > 0 ? (dayData.clicks / dayData.impressions * 100) : 0;
+    });
+    
+    const ctx = document.getElementById('impressions-ctr-chart')?.getContext('2d');
+    if (!ctx) {
+        console.error('Chart canvas not found: impressions-ctr-chart');
+        return;
+    }
+    
+    // Destroy existing chart
+    if (window.CampaignAnalyzer.getChartInstance('impressionsAndCTRChart')) {
+        window.CampaignAnalyzer.getChartInstance('impressionsAndCTRChart').destroy();
+    }
+    
+    const impressionsAndCTRChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Impressions',
+                data: impressions,
+                backgroundColor: 'rgba(37, 99, 235, 0.7)',
+                borderColor: 'rgba(37, 99, 235, 1)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            }, {
+                label: 'CTR (%)',
+                data: ctrs,
+                type: 'line',
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Daily Impressions & CTR Performance'
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Impressions'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'CTR (%)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(2) + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Store chart instance
+    window.CampaignAnalyzer.setChartInstance('impressionsAndCTRChart', impressionsAndCTRChart);
+}
+
+/**
+ * Chart B: Revenue (bars) + Switchable Conversion Rates (lines)
+ */
+function updateRevenueAndConversionsChart(selectedMetric = 'post-click') {
+    const data = window.CampaignAnalyzer.getFilteredData();
+    
+    if (!data || data.length === 0) {
+        console.log('No data available for revenue and conversions chart');
+        return;
+    }
+    
+    // Group data by date
+    const dailyData = {};
+    data.forEach(row => {
+        if (!row.DateObj) return;
+        
+        const dateKey = row.DateObj.toISOString().split('T')[0];
+        if (!dailyData[dateKey]) {
+            dailyData[dateKey] = { 
+                revenue: 0, 
+                clicks: 0, 
+                postClickConversions: 0, 
+                postViewConversions: 0 
+            };
+        }
+        dailyData[dateKey].revenue += row.Revenue || 0;
+        dailyData[dateKey].clicks += row.Clicks || 0;
+        dailyData[dateKey].postClickConversions += row.PostClickConversions || 0;
+        dailyData[dateKey].postViewConversions += row.PostViewConversions || 0;
+    });
+    
+    const dates = Object.keys(dailyData).sort();
+    const revenues = dates.map(date => dailyData[date].revenue);
+    
+    let conversionRates, lineLabel;
+    if (selectedMetric === 'post-click') {
+        conversionRates = dates.map(date => {
+            const dayData = dailyData[date];
+            return dayData.clicks > 0 ? (dayData.postClickConversions / dayData.clicks * 100) : 0;
+        });
+        lineLabel = 'Post-Click Conversion Rate (%)';
+    } else {
+        conversionRates = dates.map(date => {
+            const dayData = dailyData[date];
+            return dayData.clicks > 0 ? (dayData.postViewConversions / dayData.clicks * 100) : 0;
+        });
+        lineLabel = 'Post-View Conversion Rate (%)';
+    }
+    
+    const ctx = document.getElementById('revenue-conversions-chart')?.getContext('2d');
+    if (!ctx) {
+        console.error('Chart canvas not found: revenue-conversions-chart');
+        return;
+    }
+    
+    // Destroy existing chart
+    if (window.CampaignAnalyzer.getChartInstance('revenueAndConversionsChart')) {
+        window.CampaignAnalyzer.getChartInstance('revenueAndConversionsChart').destroy();
+    }
+    
+    const revenueAndConversionsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Revenue (PLN)',
+                data: revenues,
+                backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                borderColor: 'rgba(245, 158, 11, 1)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            }, {
+                label: lineLabel,
+                data: conversionRates,
+                type: 'line',
+                backgroundColor: selectedMetric === 'post-click' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(139, 69, 19, 0.2)',
+                borderColor: selectedMetric === 'post-click' ? 'rgba(239, 68, 68, 1)' : 'rgba(139, 69, 19, 1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Daily Revenue & ${selectedMetric === 'post-click' ? 'Post-Click' : 'Post-View'} Conversion Rate`
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Revenue (PLN)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' PLN';
+                        }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Conversion Rate (%)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(2) + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Store chart instance
+    window.CampaignAnalyzer.setChartInstance('revenueAndConversionsChart', revenueAndConversionsChart);
+}
+
+/**
+ * Setup toggle functionality for conversion metrics chart (Chart B)
+ */
+function setupConversionToggle() {
+    document.querySelectorAll('.conversion-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.conversion-toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const metric = btn.dataset.metric;
+            updateRevenueAndConversionsChart(metric);
+        });
+    });
+}
+
+/**
+ * Setup toggle functionality for First Party segments chart (Chart E)
+ */
+function setupFirstPartyToggle() {
+    document.querySelectorAll('.fp-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.fp-toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const metric = btn.dataset.metric;
+            updateFirstPartySegmentChart(metric);
+        });
+    });
+}
+
+/**
+ * Setup toggle functionality for Converged segments chart (Chart F)
+ */
+function setupConvergedToggle() {
+    document.querySelectorAll('.cnv-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.cnv-toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const metric = btn.dataset.metric;
+            updateConvergedSegmentChart(metric);
+        });
+    });
+}
+
+/**
+ * Update First Party segment chart with selected metric
+ */
+function updateFirstPartySegmentChart(selectedMetric) {
+    if (!window.fpSegmentChartData) {
+        console.log('No first party segment data available for toggle');
+        return;
+    }
+    
+    const chartInstance = window.CampaignAnalyzer.getChartInstances().fpSegmentsChart;
+    if (!chartInstance) {
+        console.log('No first party segment chart instance found');
+        return;
+    }
+    
+    const data = window.fpSegmentChartData;
+    let lineData, lineLabel, lineColor, yAxisTitle;
+    
+    switch(selectedMetric) {
+        case 'ctr':
+            lineData = data.ctrs;
+            lineLabel = 'CTR (%)';
+            lineColor = '#e74c3c';
+            yAxisTitle = 'CTR (%)';
+            break;
+        case 'post-click-rate':
+            lineData = data.postClickRates;
+            lineLabel = 'Post-Click Conv. Rate (%)';
+            lineColor = '#f39c12';
+            yAxisTitle = 'Conversion Rate (%)';
+            break;
+        case 'post-view-rate':
+            lineData = data.postViewRates;
+            lineLabel = 'Post-View Conv. Rate (%)';
+            lineColor = '#9b59b6';
+            yAxisTitle = 'Conversion Rate (%)';
+            break;
+        case 'cost-per-order':
+            lineData = data.costPerOrder;
+            lineLabel = 'Cost Per Order (PLN)';
+            lineColor = '#27ae60';
+            yAxisTitle = 'Cost Per Order (PLN)';
+            break;
+        case 'cost-per-lead':
+            lineData = data.costPerLead;
+            lineLabel = 'Cost Per Lead (PLN)';
+            lineColor = '#8e44ad';
+            yAxisTitle = 'Cost Per Lead (PLN)';
+            break;
+        default:
+            return;
+    }
+    
+    // Update chart data
+    chartInstance.data.datasets[1].data = lineData;
+    chartInstance.data.datasets[1].label = lineLabel;
+    chartInstance.data.datasets[1].borderColor = lineColor;
+    chartInstance.data.datasets[1].backgroundColor = lineColor + '40';
+    chartInstance.options.scales.y1.title.text = yAxisTitle;
+    
+    // Update tick formatting
+    chartInstance.options.scales.y1.ticks.callback = function(value) {
+        if (yAxisTitle.includes('PLN')) {
+            return value.toFixed(2) + ' PLN';
+        } else {
+            return value.toFixed(2) + '%';
+        }
+    };
+    
+    chartInstance.update('active');
+}
+
+/**
+ * Update Converged segment chart with selected metric
+ */
+function updateConvergedSegmentChart(selectedMetric) {
+    if (!window.cnvSegmentChartData) {
+        console.log('No converged segment data available for toggle');
+        return;
+    }
+    
+    const chartInstance = window.CampaignAnalyzer.getChartInstances().cnvSegmentsChart;
+    if (!chartInstance) {
+        console.log('No converged segment chart instance found');
+        return;
+    }
+    
+    const data = window.cnvSegmentChartData;
+    let lineData, lineLabel, lineColor, yAxisTitle;
+    
+    switch(selectedMetric) {
+        case 'ctr':
+            lineData = data.ctrs;
+            lineLabel = 'CTR (%)';
+            lineColor = '#e74c3c';
+            yAxisTitle = 'CTR (%)';
+            break;
+        case 'post-click-rate':
+            lineData = data.postClickRates;
+            lineLabel = 'Post-Click Conv. Rate (%)';
+            lineColor = '#f39c12';
+            yAxisTitle = 'Conversion Rate (%)';
+            break;
+        case 'post-view-rate':
+            lineData = data.postViewRates;
+            lineLabel = 'Post-View Conv. Rate (%)';
+            lineColor = '#9b59b6';
+            yAxisTitle = 'Conversion Rate (%)';
+            break;
+        case 'cost-per-order':
+            lineData = data.costPerOrder;
+            lineLabel = 'Cost Per Order (PLN)';
+            lineColor = '#27ae60';
+            yAxisTitle = 'Cost Per Order (PLN)';
+            break;
+        case 'cost-per-lead':
+            lineData = data.costPerLead;
+            lineLabel = 'Cost Per Lead (PLN)';
+            lineColor = '#8e44ad';
+            yAxisTitle = 'Cost Per Lead (PLN)';
+            break;
+        default:
+            return;
+    }
+    
+    // Update chart data
+    chartInstance.data.datasets[1].data = lineData;
+    chartInstance.data.datasets[1].label = lineLabel;
+    chartInstance.data.datasets[1].borderColor = lineColor;
+    chartInstance.data.datasets[1].backgroundColor = lineColor + '40';
+    chartInstance.options.scales.y1.title.text = yAxisTitle;
+    
+    // Update tick formatting
+    chartInstance.options.scales.y1.ticks.callback = function(value) {
+        if (yAxisTitle.includes('PLN')) {
+            return value.toFixed(2) + ' PLN';
+        } else {
+            return value.toFixed(2) + '%';
+        }
+    };
+    
+    chartInstance.update('active');
+}
+
+/**
+ * Initialize all toggle functionalities
+ */
+function initializeChartToggles() {
+    setupConversionToggle();
+    setupFirstPartyToggle();
+    setupConvergedToggle();
+}
+
 // Make functions available globally
 window.Charts = {
     updateTimeSeriesChart,
     updateAudienceChart,
     createSegmentChart,
+    createEnhancedSegmentChart,
     updateAudienceComparison,
-    updateAudienceMetricCards
+    updateAudienceMetricCards,
+    updateImpressionsAndCTRChart,
+    updateRevenueAndConversionsChart,
+    setupConversionToggle,
+    setupFirstPartyToggle,
+    setupConvergedToggle,
+    updateFirstPartySegmentChart,
+    updateConvergedSegmentChart,
+    initializeChartToggles
 };

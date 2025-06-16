@@ -149,10 +149,11 @@ p {
 }
 
 /* ===== NAVIGATION STYLES ===== */
-.platform-nav {
+.platform-nav,
+.business-nav {
   display: flex;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-xl);
   flex-wrap: wrap;
   background: white;
   padding: var(--spacing-md);
@@ -161,7 +162,12 @@ p {
   border: 1px solid var(--gray-200);
 }
 
-.platform-btn {
+.business-nav {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.platform-btn,
+.business-btn {
   background: var(--gray-100);
   border: 2px solid transparent;
   border-radius: var(--border-radius);
@@ -177,7 +183,8 @@ p {
   overflow: hidden;
 }
 
-.platform-btn::before {
+.platform-btn::before,
+.business-btn::before {
   content: '';
   position: absolute;
   top: 0;
@@ -188,13 +195,15 @@ p {
   transition: left var(--transition-base);
 }
 
-.platform-btn:hover {
+.platform-btn:hover,
+.business-btn:hover {
   background: var(--gray-200);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-.platform-btn:hover::before {
+.platform-btn:hover::before,
+.business-btn:hover::before {
   left: 100%;
 }
 
@@ -205,9 +214,63 @@ p {
   box-shadow: var(--shadow-lg);
 }
 
+.business-btn.active {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-dark);
+  box-shadow: var(--shadow-lg);
+}
+
 .platform-btn.active:hover {
   background: var(--primary-dark);
   transform: translateY(-2px);
+}
+
+.business-btn.active:hover {
+  background: var(--accent-dark);
+  transform: translateY(-2px);
+}
+
+/* ===== CHART TOGGLE BUTTONS ===== */
+.conversion-toggle-btn,
+.fp-toggle-btn,
+.cnv-toggle-btn {
+  background: var(--gray-100);
+  border: 2px solid transparent;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.75rem;
+  transition: all var(--transition-base);
+  color: var(--gray-700);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 var(--spacing-xs);
+}
+
+.conversion-toggle-btn:hover,
+.fp-toggle-btn:hover,
+.cnv-toggle-btn:hover {
+  background: var(--gray-200);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.conversion-toggle-btn.active,
+.fp-toggle-btn.active,
+.cnv-toggle-btn.active {
+  background: var(--secondary-color);
+  color: white;
+  border-color: var(--secondary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.conversion-toggle-btn.active:hover,
+.fp-toggle-btn.active:hover,
+.cnv-toggle-btn.active:hover {
+  background: var(--secondary-dark);
+  transform: translateY(-1px);
 }
 
 /* ===== CARD COMPONENTS ===== */
@@ -316,7 +379,8 @@ p {
   width: 0.1px;
   height: 0.1px;
   overflow: hidden;
-  z-index: -1;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .file-upload h3 {
@@ -384,12 +448,22 @@ p {
   word-break: break-word;
 }
 
-@supports (-webkit-background-clip: text) or (background-clip: text) {
+/* Only apply gradient text if browser fully supports it and has good fallbacks */
+@supports (-webkit-background-clip: text) {
   .metric-value {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    /* Ensure fallback color is always available */
+    color: var(--primary-color);
+  }
+}
+
+/* Fallback for browsers that don't support background-clip: text */
+@supports not (-webkit-background-clip: text) {
+  .metric-value {
+    color: var(--primary-color) !important;
   }
 }
 

@@ -7,6 +7,7 @@
 let campaignData = [];
 let filteredData = [];
 let currentPlatform = 'all';
+let currentBusinessType = 'all';
 let dateFilter = { start: null, end: null };
 
 // Chart instances
@@ -15,6 +16,8 @@ let audienceChart = null;
 let audienceComparisonChart = null;
 let fpSegmentsChart = null;
 let cnvSegmentsChart = null;
+let impressionsAndCTRChart = null;
+let revenueAndConversionsChart = null;
 
 /**
  * Initialize the application when DOM is loaded
@@ -45,17 +48,15 @@ function initializeUpload() {
     dropZone.addEventListener('click', function(e) {
         e.preventDefault();
         console.log('Drop zone clicked');
-        // Trigger native file dialog reliably across browsers
-        fileInput.focus();
-        fileInput.dispatchEvent(new MouseEvent('click')); 
+        // Trigger file dialog - more reliable approach
+        fileInput.click();
     });
 
     // Keyboard accessibility - trigger click on Enter or Space
     dropZone.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
             e.preventDefault();
-            fileInput.focus();
-            fileInput.dispatchEvent(new MouseEvent('click'));
+            fileInput.click();
         }
     });
     
@@ -85,14 +86,25 @@ function initializeUpload() {
 }
 
 /**
- * Initialize platform navigation
+ * Initialize platform and business type navigation
  */
 function initializeNavigation() {
+    // Platform navigation
     document.querySelectorAll('.platform-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentPlatform = btn.dataset.platform;
+            updateDashboard();
+        });
+    });
+    
+    // Business type navigation
+    document.querySelectorAll('.business-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.business-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentBusinessType = btn.dataset.business;
             updateDashboard();
         });
     });
@@ -239,14 +251,22 @@ function updateDashboard() {
     }
     
     if (window.Charts) {
+        // Update new enhanced charts (A & B)
+        window.Charts.updateImpressionsAndCTRChart();
+        window.Charts.updateRevenueAndConversionsChart();
+        
+        // Legacy charts (hidden but functional for compatibility)
         window.Charts.updateTimeSeriesChart();
         window.Charts.updateAudienceChart();
         window.Charts.updateAudienceComparison();
+        
+        // Initialize toggle functionalities
+        window.Charts.initializeChartToggles();
     }
 }
 
 /**
- * Get filtered data based on current platform and date filters
+ * Get filtered data based on current platform, business type, and date filters
  */
 function getFilteredData() {
     let data = [...campaignData];
@@ -254,6 +274,11 @@ function getFilteredData() {
     // Filter by platform
     if (currentPlatform !== 'all') {
         data = data.filter(row => row.Platform === currentPlatform);
+    }
+    
+    // Filter by business type
+    if (currentBusinessType !== 'all') {
+        data = data.filter(row => row.BusinessType === currentBusinessType);
     }
     
     // Filter by date range
@@ -318,6 +343,7 @@ window.CampaignAnalyzer = {
     getCampaignData: () => campaignData,
     getFilteredData: () => filteredData,
     getCurrentPlatform: () => currentPlatform,
+    getCurrentBusinessType: () => currentBusinessType,
     getDateFilter: () => dateFilter,
     
     // Core functions
@@ -331,7 +357,9 @@ window.CampaignAnalyzer = {
         audienceChart,
         audienceComparisonChart,
         fpSegmentsChart,
-        cnvSegmentsChart
+        cnvSegmentsChart,
+        impressionsAndCTRChart,
+        revenueAndConversionsChart
     }),
     
     setChartInstance: (name, instance) => {
@@ -341,6 +369,21 @@ window.CampaignAnalyzer = {
             case 'audienceComparisonChart': audienceComparisonChart = instance; break;
             case 'fpSegmentsChart': fpSegmentsChart = instance; break;
             case 'cnvSegmentsChart': cnvSegmentsChart = instance; break;
+            case 'impressionsAndCTRChart': impressionsAndCTRChart = instance; break;
+            case 'revenueAndConversionsChart': revenueAndConversionsChart = instance; break;
+        }
+    },
+    
+    getChartInstance: (name) => {
+        switch(name) {
+            case 'timeSeriesChart': return timeSeriesChart;
+            case 'audienceChart': return audienceChart;
+            case 'audienceComparisonChart': return audienceComparisonChart;
+            case 'fpSegmentsChart': return fpSegmentsChart;
+            case 'cnvSegmentsChart': return cnvSegmentsChart;
+            case 'impressionsAndCTRChart': return impressionsAndCTRChart;
+            case 'revenueAndConversionsChart': return revenueAndConversionsChart;
+            default: return null;
         }
     }
 };

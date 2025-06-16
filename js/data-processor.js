@@ -264,7 +264,10 @@ function processDV360Data(data) {
         AudienceSegment: extractAudienceSegment(row['Line Item']),
         
         // Extract campaign type from campaign name
-        CampaignType: extractCampaignType(row.Campaign)
+        CampaignType: extractCampaignType(row.Campaign),
+        
+        // Detect business type (B2B/B2C) from campaign name
+        BusinessType: detectBusinessType(row.Campaign)
     }));
 }
 
@@ -300,7 +303,10 @@ function processGoogleAdsData(data) {
         // Determine audience type from ad group or campaign
         AudienceType: determineGoogleAdsAudienceType(row['Ad Group'] || row.Campaign),
         AudienceSegment: row['Ad Group'] || row.Campaign || 'Unknown',
-        CampaignType: extractCampaignType(row.Campaign)
+        CampaignType: extractCampaignType(row.Campaign),
+        
+        // Detect business type (B2B/B2C) from campaign name
+        BusinessType: detectBusinessType(row.Campaign)
     }));
 }
 
@@ -336,7 +342,10 @@ function processSocialData(data) {
         // Determine audience type from ad set or campaign
         AudienceType: determineSocialAudienceType(row['Ad Set Name'] || row.Campaign),
         AudienceSegment: row['Ad Set Name'] || row.Campaign || 'Unknown',
-        CampaignType: extractCampaignType(row.Campaign)
+        CampaignType: extractCampaignType(row.Campaign),
+        
+        // Detect business type (B2B/B2C) from campaign name
+        BusinessType: detectBusinessType(row.Campaign)
     }));
 }
 
@@ -344,17 +353,22 @@ function processSocialData(data) {
  * Determine audience type from DV360 line item
  */
 function determineAudienceType(lineItem) {
-    if (!lineItem || typeof lineItem !== 'string') return 'Other';
+    if (!lineItem || typeof lineItem !== 'string') return 'Unknown';
     
     const item = lineItem.toLowerCase();
     
-    if (item.includes('1p') || item.includes('first party') || item.includes('fp_')) {
+    // Check for 1st Party audiences (look for "1P" in Line Item name)
+    if (item.includes('1p')) {
         return '1st Party';
-    } else if (item.includes('conv') || item.includes('converged') || item.includes('lookalike')) {
-        return 'Converged';
-    } else {
-        return 'Other';
     }
+    
+    // Check for Converged audiences (look for "CONVERGED" or "CNV" in Line Item name)
+    if (item.includes('converged') || item.includes('cnv')) {
+        return 'Converged';
+    }
+    
+    // Return Unknown if no specific type detected
+    return 'Unknown';
 }
 
 /**
@@ -419,6 +433,29 @@ function extractAudienceSegment(lineItem) {
     
     // Truncate long names for readability
     return segment.length > 30 ? segment.substring(0, 30) + '...' : segment;
+}
+
+/**
+ * Detect business type (B2B/B2C) from campaign name
+ */
+function detectBusinessType(campaignName) {
+    if (!campaignName || typeof campaignName !== 'string') return 'Unknown';
+    
+    const name = campaignName.toLowerCase();
+    
+    // Check for explicit B2B indicators
+    if (name.includes('b2b') || name.includes('business') || name.includes('enterprise') || 
+        name.includes('corporate') || name.includes('professional') || name.includes('company')) {
+        return 'B2B';
+    }
+    
+    // Check for explicit B2C indicators
+    if (name.includes('b2c') || name.includes('consumer') || name.includes('retail') || 
+        name.includes('customer') || name.includes('personal') || name.includes('individual')) {
+        return 'B2C';
+    }
+    
+    return 'Unknown';
 }
 
 /**

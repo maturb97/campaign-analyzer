@@ -65,6 +65,13 @@
             <button class="platform-btn" data-platform="social" aria-label="Show Social Media campaigns">Social Media</button>
         </nav>
 
+        <!-- Business Type Navigation -->
+        <nav class="business-nav" role="navigation" aria-label="Business type selection">
+            <button class="business-btn active" data-business="all" aria-label="Show all business types">All Campaigns</button>
+            <button class="business-btn" data-business="B2B" aria-label="Show B2B campaigns">B2B</button>
+            <button class="business-btn" data-business="B2C" aria-label="Show B2C campaigns">B2C</button>
+        </nav>
+
         <!-- File Upload Section -->
         <section class="upload-section" aria-labelledby="upload-heading">
             <h2 id="upload-heading">Upload Campaign Data</h2>
@@ -142,6 +149,29 @@
 
             <!-- Dashboard Charts -->
             <div class="dashboard">
+                <!-- Chart A: Impressions + CTR -->
+                <section class="card" aria-labelledby="impressions-ctr-heading">
+                    <h3 id="impressions-ctr-heading">Daily Impressions & CTR Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="impressions-ctr-chart" aria-label="Daily impressions and CTR dual-axis chart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Chart B: Revenue + Conversion Rates -->
+                <section class="card" aria-labelledby="revenue-conversions-heading">
+                    <h3 id="revenue-conversions-heading">Daily Revenue & Conversion Performance</h3>
+                    <div class="comparison-toggle">
+                        <button class="conversion-toggle-btn active" data-metric="post-click">Post-Click Conv. Rate</button>
+                        <button class="conversion-toggle-btn" data-metric="post-view">Post-View Conv. Rate</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenue-conversions-chart" aria-label="Daily revenue and conversion rates dual-axis chart"></canvas>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Legacy Charts (kept for backward compatibility) -->
+            <div class="dashboard" style="display: none;">
                 <!-- Time Series Chart -->
                 <section class="card" aria-labelledby="timeseries-heading">
                     <h3 id="timeseries-heading">Performance Over Time</h3>
@@ -223,6 +253,13 @@
                 <!-- First Party Segments -->
                 <section class="card" aria-labelledby="fp-segments-heading">
                     <h3 id="fp-segments-heading">1st Party Audience Segments</h3>
+                    <div class="comparison-toggle">
+                        <button class="fp-toggle-btn active" data-metric="ctr">CTR</button>
+                        <button class="fp-toggle-btn" data-metric="post-click-rate">Post-Click Conv. Rate</button>
+                        <button class="fp-toggle-btn" data-metric="post-view-rate">Post-View Conv. Rate</button>
+                        <button class="fp-toggle-btn" data-metric="cost-per-order">Cost Per Order</button>
+                        <button class="fp-toggle-btn" data-metric="cost-per-lead">Cost Per Lead</button>
+                    </div>
                     <div class="chart-container">
                         <canvas id="fp-segments-chart" aria-label="First party audience segments performance chart"></canvas>
                     </div>
@@ -251,6 +288,13 @@
                 <!-- Converged Segments -->
                 <section class="card" aria-labelledby="cnv-segments-heading">
                     <h3 id="cnv-segments-heading">Converged Audience Segments</h3>
+                    <div class="comparison-toggle">
+                        <button class="cnv-toggle-btn active" data-metric="ctr">CTR</button>
+                        <button class="cnv-toggle-btn" data-metric="post-click-rate">Post-Click Conv. Rate</button>
+                        <button class="cnv-toggle-btn" data-metric="post-view-rate">Post-View Conv. Rate</button>
+                        <button class="cnv-toggle-btn" data-metric="cost-per-order">Cost Per Order</button>
+                        <button class="cnv-toggle-btn" data-metric="cost-per-lead">Cost Per Lead</button>
+                    </div>
                     <div class="chart-container">
                         <canvas id="cnv-segments-chart" aria-label="Converged audience segments performance chart"></canvas>
                     </div>
