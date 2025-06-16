@@ -219,7 +219,7 @@ p {
   border: 1px solid var(--gray-200);
   transition: all var(--transition-base);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .card::before {
@@ -282,7 +282,7 @@ p {
   margin-bottom: var(--spacing-lg);
   background: var(--gray-50);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .file-upload::before {
@@ -310,7 +310,13 @@ p {
 }
 
 .file-upload input {
-  display: none;
+  /* Keep input accessible for Safari */
+  position: absolute;
+  opacity: 0;
+  width: 0.1px;
+  height: 0.1px;
+  overflow: hidden;
+  z-index: -1;
 }
 
 .file-upload h3 {
@@ -343,7 +349,7 @@ p {
   border: 1px solid var(--gray-200);
   transition: all var(--transition-base);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .metric-card::before {
@@ -372,13 +378,19 @@ p {
   font-size: clamp(1.5rem, 5vw, 2.5rem);
   font-weight: 800;
   color: var(--primary-color);
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
   margin-bottom: var(--spacing-sm);
   font-family: var(--font-family-mono);
   letter-spacing: -0.05em;
+  word-break: break-word;
+}
+
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .metric-value {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
 .metric-label {
