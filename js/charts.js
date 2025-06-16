@@ -3,6 +3,13 @@
  * Handles all chart creation and management using Chart.js
  */
 
+// Set global Chart.js defaults for consistent styling
+if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#374151'; // gray-700
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 12;
+}
+
 /**
  * Update time series chart with filtered data
  */
