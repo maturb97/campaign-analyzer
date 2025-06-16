@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Platform Campaign Analyzer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .platform-nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .platform-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            border-radius: 25px;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #2c3e50;
+            font-size: 1em;
+        }
+        
+        .platform-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .platform-btn.active {
+            background: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+        }
+        
+        .upload-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .file-upload {
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .file-upload:hover, .file-upload.drag-over {
+            border-color: #2980b9;
+            background: rgba(52, 152, 219, 0.05);
+        }
+        
+        .file-upload.drag-over {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+        
+        .file-upload input {
+            display: none;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        
+        tr:hover {
+            background: rgba(52, 152, 219, 0.05);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+        
+        .comparison-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .toggle-btn {
+            background: #ecf0f1;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .audience-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .audience-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .audience-card h4 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .audience-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .audience-metric {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+        }
+        
+        .audience-metric .value {
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+        
+        .audience-metric .label {
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .platform-nav {
+                justify-content: center;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Multi-Platform Campaign Analyzer</h1>
+            <p>Analyze performance across Display & Video 360, Google Ads, and Social Media campaigns</p>
+        </div>
+        
+        <div class="platform-nav">
+            <button class="platform-btn active" data-platform="dv360">Display & Video 360</button>
+            <button class="platform-btn" data-platform="google-ads">Google Ads</button>
+            <button class="platform-btn" data-platform="social">Social Media</button>
+            <button class="platform-btn" data-platform="all">All Platforms</button>
+        </div>
+        
+        <div class="upload-section">
+            <h3>Upload Campaign Data</h3>
+            <div class="file-upload" id="file-drop-zone">
+                <input type="file" id="file-input" accept=".csv" multiple style="display: none;">
+                <p>📁 Click to upload CSV files or drag and drop here</p>
+                <p style="color: #666; font-size: 0.9em; margin-top: 10px;">Supports multiple files - platform will be detected automatically</p>
+            </div>
+            <div id="file-status"></div>
+        </div>
+        
+        <div id="date-filter-section" style="display: none;">
+            <div class="card">
+                <h3>📅 Date Range Filter</h3>
+                <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                    <div>
+                        <label for="start-date" style="display: block; margin-bottom: 5px; font-weight: 600;">Start Date:</label>
+                        <input type="date" id="start-date" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div>
+                        <label for="end-date" style="display: block; margin-bottom: 5px; font-weight: 600;">End Date:</label>
+                        <input type="date" id="end-date" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <button id="apply-filter" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px;">Apply Filter</button>
+                    <button id="clear-filter" style="background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px;">Clear Filter</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="analytics-dashboard" style="display: none;">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="total-impressions">0</div>
+                    <div class="metric-label">Total Impressions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="total-clicks">0</div>
+                    <div class="metric-label">Total Clicks</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="total-revenue">0</div>
+                    <div class="metric-label">Total Revenue (PLN)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="overall-ctr">0%</div>
+                    <div class="metric-label">Overall CTR</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="total-conversions">0</div>
+                    <div class="metric-label">Total Conversions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="conversion-rate">0%</div>
+                    <div class="metric-label">Conversion Rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="post-click-conversions">0</div>
+                    <div class="metric-label">Post-Click Conversions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="post-view-conversions">0</div>
+                    <div class="metric-label">Post-View Conversions</div>
+                </div>
+            </div>
+            
+            <div class="dashboard">
+                <div class="card">
+                    <h3>📈 Performance Over Time</h3>
+                    <div class="comparison-toggle">
+                        <button class="toggle-btn active" data-metric="impressions">Impressions</button>
+                        <button class="toggle-btn" data-metric="clicks">Clicks</button>
+                        <button class="toggle-btn" data-metric="revenue">Revenue</button>
+                        <button class="toggle-btn" data-metric="ctr">CTR</button>
+                        <button class="toggle-btn" data-metric="conversions">Conversions</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="time-series-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>🎯 Audience Performance Comparison</h3>
+                    <div class="chart-container">
+                        <canvas id="audience-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Campaign Performance</h3>
+                    <div class="table-container">
+                        <table id="campaign-table">
+                            <thead>
+                                <tr>
+                                    <th>Campaign</th>
+                                    <th>Impressions</th>
+                                    <th>Clicks</th>
+                                    <th>Revenue (PLN)</th>
+                                    <th>CTR</th>
+                                    <th>CPM</th>
+                                    <th>Conversions</th>
+                                    <th>Conv. Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>👥 Audience Type Analysis</h3>
+                    <div class="table-container">
+                        <table id="audience-table">
+                            <thead>
+                                <tr>
+                                    <th>Audience Type</th>
+                                    <th>Impressions</th>
+                                    <th>Clicks</th>
+                                    <th>CTR</th>
+                                    <th>CPM</th>
+                                    <th>Viewability</th>
+                                    <th>Conversions</th>
+                                    <th>Conv. Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>🎯 1st Party Audience Segments Comparison</h3>
+                <div class="table-container">
+                    <table id="fp-segments-table">
+                        <thead>
+                            <tr>
+                                <th>1P Audience Segment</th>
+                                <th>Impressions</th>
+                                <th>Clicks</th>
+                                <th>CTR</th>
+                                <th>CPM</th>
+                                <th>Viewability</th>
+                                <th>Conv. Rate</th>
+                                <th>Post-Click Conv.</th>
+                                <th>Post-View Conv.</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="chart-container">
+                    <canvas id="fp-segments-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>🔄 Converged Audience Segments Comparison</h3>
+                <div class="table-container">
+                    <table id="cnv-segments-table">
+                        <thead>
+                            <tr>
+                                <th>CNV Audience Segment</th>
+                                <th>Impressions</th>
+                                <th>Clicks</th>
+                                <th>CTR</th>
+                                <th>CPM</th>
+                                <th>Viewability</th>
+                                <th>Conv. Rate</th>
+                                <th>Post-Click Conv.</th>
+                                <th>Post-View Conv.</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cnv-segments-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>🔍 1st Party vs Converged Audiences</h3>
+                <div class="audience-comparison">
+                    <div class="audience-card">
+                        <h4>🎯 1st Party Audiences</h4>
+                        <div class="audience-metrics">
+                            <div class="audience-metric">
+                                <div class="value" id="fp-impressions">0</div>
+                                <div class="label">Impressions</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-ctr">0%</div>
+                                <div class="label">CTR</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-cpm">0</div>
+                                <div class="label">CPM (PLN)</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-viewability">0%</div>
+                                <div class="label">Viewability</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-conversions">0</div>
+                                <div class="label">Conversions</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="fp-conv-rate">0%</div>
+                                <div class="label">Conv. Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="audience-card">
+                        <h4>🔄 Converged Audiences</h4>
+                        <div class="audience-metrics">
+                            <div class="audience-metric">
+                                <div class="value" id="conv-impressions">0</div>
+                                <div class="label">Impressions</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-ctr">0%</div>
+                                <div class="label">CTR</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-cpm">0</div>
+                                <div class="label">CPM (PLN)</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-viewability">0%</div>
+                                <div class="label">Viewability</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-conversions">0</div>
+                                <div class="label">Conversions</div>
+                            </div>
+                            <div class="audience-metric">
+                                <div class="value" id="conv-conv-rate">0%</div>
+                                <div class="label">Conv. Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="audience-comparison-chart"></canvas>
+                </div>
+                <div style="margin-top: 15px; padding: 15px; background: rgba(52, 152, 219, 0.1); border-radius: 10px; font-size: 0.9em;">
+                    <strong>📊 Radar Chart Metrics Explained:</strong><br>
+                    • <strong>CTR (%)</strong>: Click-through rate as percentage<br>
+                    • <strong>Viewability (%)</strong>: Viewable impressions as percentage<br>
+                    • <strong>Conv. Rate (%)</strong>: Conversion rate as percentage<br>
+                    • <strong>CPM Efficiency</strong>: Inverse of CPM (lower CPM = higher efficiency)<br>
+                    All metrics are scaled relative to their maximum values in the dataset for better readability.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let campaignData = [];
+        let filteredData = [];
+        let timeSeriesChart = null;
+        let audienceChart = null;
+        let audienceComparisonChart = null;
+        let fpSegmentsChart = null;
+        let cnvSegmentsChart = null;
+        let currentPlatform = 'dv360';
+        let dateFilter = { start: null, end: null };
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUpload();
+            initializeNavigation();
+            initializeDateFilters();
+        });
+        
+        function initializeUpload() {
+            const fileInput = document.getElementById('file-input');
+            const dropZone = document.getElementById('file-drop-zone');
+            
+            // Click to upload
+            dropZone.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Drop zone clicked');
+                fileInput.click();
+            });
+            
+            // File input change
+            fileInput.addEventListener('change', function(e) {
+                console.log('File input changed');
+                handleFiles(e.target.files);
+            });
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop zone when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            dropZone.addEventListener('drop', handleDrop, false);
+        }
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function highlight(e) {
+            document.getElementById('file-drop-zone').classList.add('drag-over');
+        }
+        
+        function unhighlight(e) {
+            document.getElementById('file-drop-zone').classList.remove('drag-over');
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            console.log('Files dropped:', files.length);
+            handleFiles(files);
+        }
+        
+        function initializeNavigation() {
+            // Platform navigation
+            document.querySelectorAll('.platform-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentPlatform = btn.dataset.platform;
+                    filterDataByPlatform();
+                });
+            });
+        }
+        
+        function initializeDateFilters() {
+            // Date filter handling
+            document.getElementById('apply-filter').addEventListener('click', applyDateFilter);
+            document.getElementById('clear-filter').addEventListener('click', clearDateFilter);
+        }
+        
+        function handleFiles(files) {
+            console.log('Handling files:', files.length);
+            
+            if (!files || files.length === 0) {
+                console.log('No files to process');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('file-status');
+            statusDiv.innerHTML = '<p>📤 Processing files...</p>';
+            
+            let processedFiles = 0;
+            const totalFiles = files.length;
+            
+            Array.from(files).forEach(file => {
+                console.log('Processing file:', file.name, 'Type:', file.type, 'Size:', file.size);
+                
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${file.name} is not a CSV file</p>`;
+                    return;
+                }
+                
+                Papa.parse(file, {
+                    header: true,
+                    dynamicTyping: false, // Keep as strings for better platform detection
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        console.log('Parse complete for:', file.name, 'Rows:', results.data.length, 'Headers:', results.meta.fields);
+                        
+                        try {
+                            const platform = detectPlatform(results.meta.fields, file.name);
+                            console.log('Detected platform:', platform, 'for file:', file.name);
+                            
+                            processCampaignData(results.data, file.name, platform);
+                            processedFiles++;
+                            
+                            if (processedFiles === totalFiles) {
+                                const platformsDetected = [...new Set(campaignData.map(row => row.Platform))];
+                                statusDiv.innerHTML = `
+                                    <p style="color: green;">✅ Successfully loaded ${totalFiles} file(s)</p>
+                                    <p style="color: #666; font-size: 0.9em;">
+                                        Platforms detected: ${platformsDetected.map(p => {
+                                            switch(p) {
+                                                case 'dv360': return 'Display & Video 360';
+                                                case 'google-ads': return 'Google Ads';
+                                                case 'social': return 'Social Media';
+                                                default: return p;
+                                            }
+                                        }).join(', ')}
+                                    </p>
+                                    <p style="color: #666; font-size: 0.9em;">
+                                        Total records: ${campaignData.length}
+                                    </p>
+                                `;
+                                document.getElementById('date-filter-section').style.display = 'block';
+                                updateDashboard();
+                            }
+                        } catch (error) {
+                            console.error('Error processing file:', file.name, error);
+                            statusDiv.innerHTML = `<p style="color: red;">❌ Error processing ${file.name}: ${error.message}</p>`;
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Parse error for:', file.name, error);
+                        statusDiv.innerHTML = `<p style="color: red;">❌ Error parsing ${file.name}: ${error.message}</p>`;
+                    }
+                });
+            });
+        }
+        
+        function detectPlatform(headers, filename) {
+            const headerStr = headers.join('|').toLowerCase();
+            const filenameStr = filename.toLowerCase();
+            
+            // DV360 Detection
+            if (headerStr.includes('insertion order') || 
+                headerStr.includes('line item') || 
+                headerStr.includes('active view: viewable impressions') ||
+                headerStr.includes('advertiser currency') ||
+                filenameStr.includes('tmobile') ||
+                filenameStr.includes('dv360') ||
+                filenameStr.includes('display')) {
+                return 'dv360';
+            }
+            
+            // Google Ads Detection
+            if (headerStr.includes('campaign id') || 
+                headerStr.includes('ad group') || 
+                headerStr.includes('quality score') ||
+                headerStr.includes('search impression share') ||
+                headerStr.includes('cost per conversion') ||
+                filenameStr.includes('google_ads') ||
+                filenameStr.includes('adwords')) {
+                return 'google-ads';
+            }
+            
+            // Social Media Detection
+            if (headerStr.includes('reach') || 
+                headerStr.includes('frequency') || 
+                headerStr.includes('post engagement') ||
+                headerStr.includes('link clicks') ||
+                headerStr.includes('video views') ||
+                filenameStr.includes('facebook') ||
+                filenameStr.includes('instagram') ||
+                filenameStr.includes('linkedin') ||
+                filenameStr.includes('social')) {
+                return 'social';
+            }
+            
+            // Default to DV360 if uncertain (since that's what we have sample data for)
+            console.log('Could not detect platform for:', filename, 'Headers:', headers);
+            return 'dv360';
+        }
+        
+        function applyDateFilter() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            if (startDate && endDate) {
+                dateFilter.start = startDate;
+                dateFilter.end = endDate;
+                updateDashboard();
+            }
+        }
+        
+        function clearDateFilter() {
+            dateFilter.start = null;
+            dateFilter.end = null;
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            updateDashboard();
+        }
+        
+        function processCampaignData(data, filename, platform) {
+            console.log(`Processing ${filename} as ${platform} platform`);
+            
+            // Clean the data based on platform
+            let cleanData;
+            if (platform === 'dv360') {
+                cleanData = processDV360Data(data);
+            } else if (platform === 'google-ads') {
+                cleanData = processGoogleAdsData(data);
+            } else if (platform === 'social') {
+                cleanData = processSocialData(data);
+            } else {
+                // Fallback to DV360 processing
+                cleanData = processDV360Data(data);
+            }
+            
+            // Add platform info to each row
+            cleanData.forEach(row => {
+                row.Platform = platform;
+                row.SourceFile = filename;
+                // Standardize date format for filtering
+                if (row.Date) {
+                    row.DateObj = new Date(row.Date);
+                }
+            });
+            
+            campaignData = campaignData.concat(cleanData);
+            console.log(`Added ${cleanData.length} rows from ${filename}`);
+        }
+        
+        function processDV360Data(data) {
+            // Process DV360 CSV data
+            const cleanData = data.filter(row => 
+                row.Date && row.Campaign && row['Line Item'] && 
+                row.Date !== 'null' && row.Campaign !== 'null' && row['Line Item'] !== 'null'
+            );
+            
+            return cleanData.map(row => ({
+                ...row,
+                Revenue: parseFloat(row['Revenue (Adv Currency)'] || 0),
+                Impressions: parseInt(row.Impressions || 0),
+                Clicks: parseInt(row.Clicks || 0),
+                ViewableImpressions: parseInt(row['Active View: Viewable Impressions'] || 0),
+                PostClickConversions: parseFloat(row['Post-Click Conversions'] || 0),
+                PostViewConversions: parseFloat(row['Post-View Conversions'] || 0),
+                TotalConversions: parseFloat(row['Total Conversions'] || 0),
+                
+                // Determine audience type and segment
+                AudienceType: determineAudienceType(row['Line Item']),
+                AudienceSegment: extractAudienceSegment(row['Line Item']),
+                
+                // Extract campaign type
+                CampaignType: row.Campaign ? row.Campaign.split('_')[3] || row.Campaign : 'Unknown'
+            }));
+        }
+        
+        function processGoogleAdsData(data) {
+            // Process Google Ads CSV data - adjust field mapping as needed
+            const cleanData = data.filter(row => 
+                row.Date && row.Campaign
+            );
+            
+            return cleanData.map(row => ({
+                ...row,
+                Revenue: parseFloat(row.Cost || row['Cost (Local Currency)'] || 0),
+                Impressions: parseInt(row.Impressions || 0),
+                Clicks: parseInt(row.Clicks || 0),
+                ViewableImpressions: parseInt(row.Impressions || 0), // Fallback
+                PostClickConversions: parseFloat(row.Conversions || 0),
+                PostViewConversions: parseFloat(row['View-through Conversions'] || 0),
+                TotalConversions: parseFloat(row.Conversions || 0) + parseFloat(row['View-through Conversions'] || 0),
+                
+                AudienceType: determineGoogleAdsAudienceType(row['Ad Group'] || row.Campaign),
+                AudienceSegment: row['Ad Group'] || 'Unknown',
+                CampaignType: row.Campaign || 'Unknown'
+            }));
+        }
+        
+        function processSocialData(data) {
+            // Process Social Media CSV data - adjust field mapping as needed
+            const cleanData = data.filter(row => 
+                row.Date && row.Campaign
+            );
+            
+            return cleanData.map(row => ({
+                ...row,
+                Revenue: parseFloat(row['Amount Spent'] || row.Spend || 0),
+                Impressions: parseInt(row.Impressions || row.Reach || 0),
+                Clicks: parseInt(row.Clicks || row['Link Clicks'] || 0),
+                ViewableImpressions: parseInt(row.Impressions || row.Reach || 0),
+                PostClickConversions: parseFloat(row.Conversions || row.Results || 0),
+                PostViewConversions: parseFloat(row['View Conversions'] || 0),
+                TotalConversions: parseFloat(row.Conversions || row.Results || 0),
+                
+                AudienceType: determineSocialAudienceType(row['Ad Set Name'] || row.Campaign),
+                AudienceSegment: row['Ad Set Name'] || 'Unknown',
+                CampaignType: row.Campaign || 'Unknown'
+            }));
+        }
+        
+        function determineAudienceType(lineItem) {
+            if (!lineItem) return 'Other';
+            
+            if (lineItem.includes('1P')) {
+                return '1st Party';
+            } else if (lineItem.includes('CONV') || lineItem.includes('CONVERGED')) {
+                return 'Converged';
+            } else {
+                return 'Other';
+            }
+        }
+        
+        function determineGoogleAdsAudienceType(adGroup) {
+            if (!adGroup) return 'Other';
+            
+            if (adGroup.toLowerCase().includes('1p') || adGroup.toLowerCase().includes('first party')) {
+                return '1st Party';
+            } else if (adGroup.toLowerCase().includes('conv') || adGroup.toLowerCase().includes('similar')) {
+                return 'Converged';
+            } else {
+                return 'Other';
+            }
+        }
+        
+        function determineSocialAudienceType(adSetName) {
+            if (!adSetName) return 'Other';
+            
+            if (adSetName.toLowerCase().includes('custom') || adSetName.toLowerCase().includes('retargeting')) {
+                return '1st Party';
+            } else if (adSetName.toLowerCase().includes('lookalike') || adSetName.toLowerCase().includes('similar')) {
+                return 'Converged';
+            } else {
+                return 'Other';
+            }
+        }
+        
+        function extractAudienceSegment(lineItem) {
+            if (!lineItem) return 'Unknown';
+            
+            // Extract meaningful audience segment names from line item
+            if (lineItem.includes('1P')) {
+                // For 1st party, look for patterns after 1P
+                const parts = lineItem.split('_');
+                const fpIndex = parts.findIndex(part => part.includes('1P'));
+                if (fpIndex >= 0 && fpIndex < parts.length - 1) {
+                    return parts.slice(Math.max(0, fpIndex - 1), fpIndex + 2).join('_');
+                }
+            } else if (lineItem.includes('CONV') || lineItem.includes('CONVERGED')) {
+                // For converged, extract relevant parts
+                const parts = lineItem.split('_');
+                const convIndex = parts.findIndex(part => part.includes('CONV'));
+                if (convIndex >= 0) {
+                    return parts.slice(Math.max(0, convIndex - 1), convIndex + 2).join('_');
+                }
+            }
+            
+            // Truncate long names for readability
+            return lineItem.length > 30 ? lineItem.substring(0, 30) + '...' : lineItem;
+        }
+        
+        function updateDashboard() {
+            document.getElementById('analytics-dashboard').style.display = 'block';
+            filteredData = getFilteredData();
+            updateMetrics();
+            updateTimeSeriesChart();
+            updateAudienceChart();
+            updateCampaignTable();
+            updateAudienceTable();
+            updateAudienceSegmentTables();
+            updateAudienceComparison();
+        }
+        
+        function updateMetrics() {
+            const data = filteredData;
+            
+            const totals = data.reduce((acc, row) => ({
+                impressions: acc.impressions + row.Impressions,
+                clicks: acc.clicks + row.Clicks,
+                revenue: acc.revenue + row.Revenue,
+                viewableImpressions: acc.viewableImpressions + row.ViewableImpressions,
+                totalConversions: acc.totalConversions + row.TotalConversions,
+                postClickConversions: acc.postClickConversions + row.PostClickConversions,
+                postViewConversions: acc.postViewConversions + row.PostViewConversions
+            }), { 
+                impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0,
+                totalConversions: 0, postClickConversions: 0, postViewConversions: 0
+            });
+            
+            const ctr = totals.clicks / totals.impressions * 100;
+            const conversionRate = totals.totalConversions / totals.impressions * 100;
+            
+            document.getElementById('total-impressions').textContent = totals.impressions.toLocaleString();
+            document.getElementById('total-clicks').textContent = totals.clicks.toLocaleString();
+            document.getElementById('total-revenue').textContent = totals.revenue.toLocaleString();
+            document.getElementById('overall-ctr').textContent = ctr.toFixed(3) + '%';
+            document.getElementById('total-conversions').textContent = totals.totalConversions.toLocaleString();
+            document.getElementById('conversion-rate').textContent = conversionRate.toFixed(4) + '%';
+            document.getElementById('post-click-conversions').textContent = totals.postClickConversions.toLocaleString();
+            document.getElementById('post-view-conversions').textContent = totals.postViewConversions.toLocaleString();
+        }
+        
+        function updateTimeSeriesChart() {
+            const data = filteredData;
+            
+            // Group by date
+            const dailyData = {};
+            data.forEach(row => {
+                if (!dailyData[row.Date]) {
+                    dailyData[row.Date] = { impressions: 0, clicks: 0, revenue: 0, conversions: 0 };
+                }
+                dailyData[row.Date].impressions += row.Impressions;
+                dailyData[row.Date].clicks += row.Clicks;
+                dailyData[row.Date].revenue += row.Revenue;
+                dailyData[row.Date].conversions += row.TotalConversions;
+            });
+            
+            const dates = Object.keys(dailyData).sort();
+            const impressions = dates.map(date => dailyData[date].impressions);
+            const clicks = dates.map(date => dailyData[date].clicks);
+            const revenue = dates.map(date => dailyData[date].revenue);
+            const conversions = dates.map(date => dailyData[date].conversions);
+            const ctr = dates.map(date => dailyData[date].clicks / dailyData[date].impressions * 100);
+            
+            const ctx = document.getElementById('time-series-chart').getContext('2d');
+            
+            if (timeSeriesChart) {
+                timeSeriesChart.destroy();
+            }
+            
+            timeSeriesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Impressions',
+                        data: impressions,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Add metric toggle functionality
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    const metric = btn.dataset.metric;
+                    let newData, label, color;
+                    
+                    switch(metric) {
+                        case 'impressions':
+                            newData = impressions;
+                            label = 'Impressions';
+                            color = '#3498db';
+                            break;
+                        case 'clicks':
+                            newData = clicks;
+                            label = 'Clicks';
+                            color = '#e74c3c';
+                            break;
+                        case 'revenue':
+                            newData = revenue;
+                            label = 'Revenue (PLN)';
+                            color = '#2ecc71';
+                            break;
+                        case 'ctr':
+                            newData = ctr;
+                            label = 'CTR (%)';
+                            color = '#f39c12';
+                            break;
+                        case 'conversions':
+                            newData = conversions;
+                            label = 'Conversions';
+                            color = '#9b59b6';
+                            break;
+                    }
+                    
+                    timeSeriesChart.data.datasets[0].data = newData;
+                    timeSeriesChart.data.datasets[0].label = label;
+                    timeSeriesChart.data.datasets[0].borderColor = color;
+                    timeSeriesChart.data.datasets[0].backgroundColor = color + '20';
+                    timeSeriesChart.update();
+                });
+            });
+        }
+        
+        function updateAudienceChart() {
+            const data = filteredData;
+            
+            // Group by audience type
+            const audienceData = {};
+            data.forEach(row => {
+                if (!audienceData[row.AudienceType]) {
+                    audienceData[row.AudienceType] = { impressions: 0, clicks: 0, revenue: 0 };
+                }
+                audienceData[row.AudienceType].impressions += row.Impressions;
+                audienceData[row.AudienceType].clicks += row.Clicks;
+                audienceData[row.AudienceType].revenue += row.Revenue;
+            });
+            
+            const audienceTypes = Object.keys(audienceData);
+            const impressions = audienceTypes.map(type => audienceData[type].impressions);
+            const ctrs = audienceTypes.map(type => audienceData[type].clicks / audienceData[type].impressions * 100);
+            
+            const ctx = document.getElementById('audience-chart').getContext('2d');
+            
+            if (audienceChart) {
+                audienceChart.destroy();
+            }
+            
+            audienceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: audienceTypes,
+                    datasets: [
+                        {
+                            label: 'Impressions',
+                            data: impressions,
+                            backgroundColor: ['#3498db', '#e74c3c', '#f39c12'],
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'CTR (%)',
+                            data: ctrs,
+                            backgroundColor: ['rgba(52, 152, 219, 0.6)', 'rgba(231, 76, 60, 0.6)', 'rgba(243, 156, 18, 0.6)'],
+                            type: 'line',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateCampaignTable() {
+            const data = filteredData;
+            
+            // Group by campaign
+            const campaignData = {};
+            data.forEach(row => {
+                if (!campaignData[row.CampaignType]) {
+                    campaignData[row.CampaignType] = { 
+                        impressions: 0, clicks: 0, revenue: 0, conversions: 0 
+                    };
+                }
+                campaignData[row.CampaignType].impressions += row.Impressions;
+                campaignData[row.CampaignType].clicks += row.Clicks;
+                campaignData[row.CampaignType].revenue += row.Revenue;
+                campaignData[row.CampaignType].conversions += row.TotalConversions;
+            });
+            
+            const tbody = document.querySelector('#campaign-table tbody');
+            tbody.innerHTML = '';
+            
+            Object.entries(campaignData).forEach(([campaign, metrics]) => {
+                const ctr = (metrics.clicks / metrics.impressions * 100).toFixed(3);
+                const cpm = (metrics.revenue / metrics.impressions * 1000).toFixed(2);
+                const convRate = (metrics.conversions / metrics.impressions * 100).toFixed(4);
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${campaign}</td>
+                    <td>${metrics.impressions.toLocaleString()}</td>
+                    <td>${metrics.clicks.toLocaleString()}</td>
+                    <td>${metrics.revenue.toFixed(2)}</td>
+                    <td>${ctr}%</td>
+                    <td>${cpm}</td>
+                    <td>${metrics.conversions.toLocaleString()}</td>
+                    <td>${convRate}%</td>
+                `;
+            });
+        }
+        
+        function updateAudienceTable() {
+            const data = filteredData;
+            
+            // Group by audience type
+            const audienceData = {};
+            data.forEach(row => {
+                if (!audienceData[row.AudienceType]) {
+                    audienceData[row.AudienceType] = { 
+                        impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0, conversions: 0 
+                    };
+                }
+                audienceData[row.AudienceType].impressions += row.Impressions;
+                audienceData[row.AudienceType].clicks += row.Clicks;
+                audienceData[row.AudienceType].revenue += row.Revenue;
+                audienceData[row.AudienceType].viewableImpressions += row.ViewableImpressions;
+                audienceData[row.AudienceType].conversions += row.TotalConversions;
+            });
+            
+            const tbody = document.querySelector('#audience-table tbody');
+            tbody.innerHTML = '';
+            
+            Object.entries(audienceData).forEach(([audience, metrics]) => {
+                const ctr = (metrics.clicks / metrics.impressions * 100).toFixed(3);
+                const cpm = (metrics.revenue / metrics.impressions * 1000).toFixed(2);
+                const viewability = (metrics.viewableImpressions / metrics.impressions * 100).toFixed(1);
+                const convRate = (metrics.conversions / metrics.impressions * 100).toFixed(4);
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${audience}</td>
+                    <td>${metrics.impressions.toLocaleString()}</td>
+                    <td>${metrics.clicks.toLocaleString()}</td>
+                    <td>${ctr}%</td>
+                    <td>${cpm}</td>
+                    <td>${viewability}%</td>
+                    <td>${metrics.conversions.toLocaleString()}</td>
+                    <td>${convRate}%</td>
+                `;
+            });
+        }
+        
+        function updateAudienceSegmentTables() {
+            updateFirstPartySegments();
+            updateConvergedSegments();
+        }
+        
+        function updateFirstPartySegments() {
+            const data = filteredData.filter(row => row.AudienceType === '1st Party');
+            
+            // Group by audience segment
+            const segmentData = {};
+            data.forEach(row => {
+                if (!segmentData[row.AudienceSegment]) {
+                    segmentData[row.AudienceSegment] = { 
+                        impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0,
+                        postClickConversions: 0, postViewConversions: 0, totalConversions: 0
+                    };
+                }
+                segmentData[row.AudienceSegment].impressions += row.Impressions;
+                segmentData[row.AudienceSegment].clicks += row.Clicks;
+                segmentData[row.AudienceSegment].revenue += row.Revenue;
+                segmentData[row.AudienceSegment].viewableImpressions += row.ViewableImpressions;
+                segmentData[row.AudienceSegment].postClickConversions += row.PostClickConversions;
+                segmentData[row.AudienceSegment].postViewConversions += row.PostViewConversions;
+                segmentData[row.AudienceSegment].totalConversions += row.TotalConversions;
+            });
+            
+            const tbody = document.querySelector('#fp-segments-table tbody');
+            tbody.innerHTML = '';
+            
+            Object.entries(segmentData).forEach(([segment, metrics]) => {
+                const ctr = (metrics.clicks / metrics.impressions * 100).toFixed(3);
+                const cpm = (metrics.revenue / metrics.impressions * 1000).toFixed(2);
+                const viewability = (metrics.viewableImpressions / metrics.impressions * 100).toFixed(1);
+                const convRate = (metrics.totalConversions / metrics.impressions * 100).toFixed(4);
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td title="${segment}">${segment.length > 25 ? segment.substring(0, 25) + '...' : segment}</td>
+                    <td>${metrics.impressions.toLocaleString()}</td>
+                    <td>${metrics.clicks.toLocaleString()}</td>
+                    <td>${ctr}%</td>
+                    <td>${cpm}</td>
+                    <td>${viewability}%</td>
+                    <td>${convRate}%</td>
+                    <td>${metrics.postClickConversions.toFixed(2)}</td>
+                    <td>${metrics.postViewConversions.toFixed(2)}</td>
+                `;
+            });
+            
+            // Create chart for 1P segments
+            createSegmentChart('fp-segments-chart', segmentData, '1st Party Audience Segments');
+        }
+        
+        function updateConvergedSegments() {
+            const data = filteredData.filter(row => row.AudienceType === 'Converged');
+            
+            // Group by audience segment
+            const segmentData = {};
+            data.forEach(row => {
+                if (!segmentData[row.AudienceSegment]) {
+                    segmentData[row.AudienceSegment] = { 
+                        impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0,
+                        postClickConversions: 0, postViewConversions: 0, totalConversions: 0
+                    };
+                }
+                segmentData[row.AudienceSegment].impressions += row.Impressions;
+                segmentData[row.AudienceSegment].clicks += row.Clicks;
+                segmentData[row.AudienceSegment].revenue += row.Revenue;
+                segmentData[row.AudienceSegment].viewableImpressions += row.ViewableImpressions;
+                segmentData[row.AudienceSegment].postClickConversions += row.PostClickConversions;
+                segmentData[row.AudienceSegment].postViewConversions += row.PostViewConversions;
+                segmentData[row.AudienceSegment].totalConversions += row.TotalConversions;
+            });
+            
+            const tbody = document.querySelector('#cnv-segments-table tbody');
+            tbody.innerHTML = '';
+            
+            Object.entries(segmentData).forEach(([segment, metrics]) => {
+                const ctr = (metrics.clicks / metrics.impressions * 100).toFixed(3);
+                const cpm = (metrics.revenue / metrics.impressions * 1000).toFixed(2);
+                const viewability = (metrics.viewableImpressions / metrics.impressions * 100).toFixed(1);
+                const convRate = (metrics.totalConversions / metrics.impressions * 100).toFixed(4);
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td title="${segment}">${segment.length > 25 ? segment.substring(0, 25) + '...' : segment}</td>
+                    <td>${metrics.impressions.toLocaleString()}</td>
+                    <td>${metrics.clicks.toLocaleString()}</td>
+                    <td>${ctr}%</td>
+                    <td>${cpm}</td>
+                    <td>${viewability}%</td>
+                    <td>${convRate}%</td>
+                    <td>${metrics.postClickConversions.toFixed(2)}</td>
+                    <td>${metrics.postViewConversions.toFixed(2)}</td>
+                `;
+            });
+            
+            // Create chart for CNV segments
+            createSegmentChart('cnv-segments-chart', segmentData, 'Converged Audience Segments');
+        }
+        
+        function createSegmentChart(canvasId, segmentData, title) {
+            const segments = Object.keys(segmentData).slice(0, 10); // Top 10 segments
+            const ctrs = segments.map(segment => segmentData[segment].clicks / segmentData[segment].impressions * 100);
+            const impressions = segments.map(segment => segmentData[segment].impressions);
+            
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            // Destroy existing chart
+            if (canvasId === 'fp-segments-chart' && fpSegmentsChart) {
+                fpSegmentsChart.destroy();
+            } else if (canvasId === 'cnv-segments-chart' && cnvSegmentsChart) {
+                cnvSegmentsChart.destroy();
+            }
+            
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: segments.map(s => s.length > 15 ? s.substring(0, 15) + '...' : s),
+                    datasets: [
+                        {
+                            label: 'Impressions',
+                            data: impressions,
+                            backgroundColor: 'rgba(52, 152, 219, 0.6)',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'CTR (%)',
+                            data: ctrs,
+                            backgroundColor: 'rgba(231, 76, 60, 0.8)',
+                            type: 'line',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Impressions'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            title: {
+                                display: true,
+                                text: 'CTR (%)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+        function updateAudienceComparison() {
+            const data = filteredData;
+            
+            // Calculate metrics for 1st Party and Converged audiences
+            const fpData = data.filter(row => row.AudienceType === '1st Party');
+            const convData = data.filter(row => row.AudienceType === 'Converged');
+            
+            const fpMetrics = calculateMetrics(fpData);
+            const convMetrics = calculateMetrics(convData);
+            
+            // Update 1st Party cards
+            document.getElementById('fp-impressions').textContent = fpMetrics.impressions.toLocaleString();
+            document.getElementById('fp-ctr').textContent = fpMetrics.ctr.toFixed(3) + '%';
+            document.getElementById('fp-cpm').textContent = fpMetrics.cpm.toFixed(2);
+            document.getElementById('fp-viewability').textContent = fpMetrics.viewability.toFixed(1) + '%';
+            document.getElementById('fp-conversions').textContent = fpMetrics.conversions.toLocaleString();
+            document.getElementById('fp-conv-rate').textContent = fpMetrics.conversionRate.toFixed(4) + '%';
+            
+            // Update Converged cards
+            document.getElementById('conv-impressions').textContent = convMetrics.impressions.toLocaleString();
+            document.getElementById('conv-ctr').textContent = convMetrics.ctr.toFixed(3) + '%';
+            document.getElementById('conv-cpm').textContent = convMetrics.cpm.toFixed(2);
+            document.getElementById('conv-viewability').textContent = convMetrics.viewability.toFixed(1) + '%';
+            document.getElementById('conv-conversions').textContent = convMetrics.conversions.toLocaleString();
+            document.getElementById('conv-conv-rate').textContent = convMetrics.conversionRate.toFixed(4) + '%';
+            
+            // Create improved comparison chart with proper scaling
+            const ctx = document.getElementById('audience-comparison-chart').getContext('2d');
+            
+            if (audienceComparisonChart) {
+                audienceComparisonChart.destroy();
+            }
+            
+            // Calculate max values for proper scaling
+            const maxCtr = Math.max(fpMetrics.ctr, convMetrics.ctr);
+            const maxViewability = Math.max(fpMetrics.viewability, convMetrics.viewability);
+            const maxConvRate = Math.max(fpMetrics.conversionRate, convMetrics.conversionRate);
+            const maxCpmEff = Math.max(100 / fpMetrics.cpm, 100 / convMetrics.cpm);
+            
+            audienceComparisonChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['CTR (%)', 'Viewability (%)', 'Conv. Rate (%)', 'CPM Efficiency'],
+                    datasets: [
+                        {
+                            label: '1st Party',
+                            data: [
+                                (fpMetrics.ctr / maxCtr) * 100,
+                                (fpMetrics.viewability / maxViewability) * 100,
+                                (fpMetrics.conversionRate / maxConvRate) * 100,
+                                ((100 / fpMetrics.cpm) / maxCpmEff) * 100
+                            ],
+                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            borderColor: '#3498db',
+                            pointBackgroundColor: '#3498db',
+                            pointBorderColor: '#3498db',
+                            pointRadius: 6
+                        },
+                        {
+                            label: 'Converged',
+                            data: [
+                                (convMetrics.ctr / maxCtr) * 100,
+                                (convMetrics.viewability / maxViewability) * 100,
+                                (convMetrics.conversionRate / maxConvRate) * 100,
+                                ((100 / convMetrics.cpm) / maxCpmEff) * 100
+                            ],
+                            backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                            borderColor: '#e74c3c',
+                            pointBackgroundColor: '#e74c3c',
+                            pointBorderColor: '#e74c3c',
+                            pointRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Audience Performance Comparison (Scaled to Max Values)'
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function calculateMetrics(data) {
+            const totals = data.reduce((acc, row) => ({
+                impressions: acc.impressions + row.Impressions,
+                clicks: acc.clicks + row.Clicks,
+                revenue: acc.revenue + row.Revenue,
+                viewableImpressions: acc.viewableImpressions + row.ViewableImpressions,
+                conversions: acc.conversions + row.TotalConversions
+            }), { impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0, conversions: 0 });
+            
+            return {
+                impressions: totals.impressions,
+                clicks: totals.clicks,
+                revenue: totals.revenue,
+                conversions: totals.conversions,
+                ctr: totals.clicks / totals.impressions * 100,
+                cpm: totals.revenue / totals.impressions * 1000,
+                viewability: totals.viewableImpressions / totals.impressions * 100,
+                conversionRate: totals.conversions / totals.impressions * 100
+            };
+        }
+        
+        function getFilteredData() {
+            let data = campaignData;
+            
+            // Filter by platform
+            if (currentPlatform !== 'all') {
+                data = data.filter(row => row.Platform === currentPlatform);
+            }
+            
+            // Filter by date range
+            if (dateFilter.start && dateFilter.end) {
+                const startDate = new Date(dateFilter.start);
+                const endDate = new Date(dateFilter.end);
+                data = data.filter(row => {
+                    const rowDate = new Date(row.Date);
+                    return rowDate >= startDate && rowDate <= endDate;
+                });
+            }
+            
+            return data;
+        }
+        
+        function applyDateFilter() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            if (startDate && endDate) {
+                dateFilter.start = startDate;
+                dateFilter.end = endDate;
+                updateDashboard();
+            }
+        }
+        
+        function clearDateFilter() {
+            dateFilter.start = null;
+            dateFilter.end = null;
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            updateDashboard();
+        }
+        
+        function detectPlatform(headers, filename) {
+            const headerStr = headers.join('|').toLowerCase();
+            const filenameStr = filename.toLowerCase();
+            
+            // DV360 Detection
+            if (headerStr.includes('insertion order') || 
+                headerStr.includes('line item') || 
+                headerStr.includes('active view: viewable impressions') ||
+                headerStr.includes('advertiser currency') ||
+                filenameStr.includes('tmobile') ||
+                filenameStr.includes('dv360') ||
+                filenameStr.includes('display')) {
+                return 'dv360';
+            }
+            
+            // Google Ads Detection
+            if (headerStr.includes('campaign id') || 
+                headerStr.includes('ad group') || 
+                headerStr.includes('quality score') ||
+                headerStr.includes('search impression share') ||
+                headerStr.includes('cost per conversion') ||
+                filenameStr.includes('google_ads') ||
+                filenameStr.includes('adwords')) {
+                return 'google-ads';
+            }
+            
+            // Social Media Detection
+            if (headerStr.includes('reach') || 
+                headerStr.includes('frequency') || 
+                headerStr.includes('post engagement') ||
+                headerStr.includes('link clicks') ||
+                headerStr.includes('video views') ||
+                filenameStr.includes('facebook') ||
+                filenameStr.includes('instagram') ||
+                filenameStr.includes('linkedin') ||
+                filenameStr.includes('social')) {
+                return 'social';
+            }
+            
+            // Default to DV360 if uncertain (since that's what we have sample data for)
+            console.log('Could not detect platform for:', filename, 'Headers:', headers);
+            return 'dv360';
+        }
+        
+        function processCampaignData(data, filename, platform) {
+            console.log(`Processing ${filename} as ${platform} platform`);
+            
+            // Clean the data based on platform
+            let cleanData;
+            if (platform === 'dv360') {
+                cleanData = processDV360Data(data);
+            } else if (platform === 'google-ads') {
+                cleanData = processGoogleAdsData(data);
+            } else if (platform === 'social') {
+                cleanData = processSocialData(data);
+            } else {
+                // Fallback to DV360 processing
+                cleanData = processDV360Data(data);
+            }
+            
+            // Add platform info to each row
+            cleanData.forEach(row => {
+                row.Platform = platform;
+                row.SourceFile = filename;
+                // Standardize date format for filtering
+                if (row.Date) {
+                    row.DateObj = new Date(row.Date);
+                }
+            });
+            
+            campaignData = campaignData.concat(cleanData);
+            console.log(`Added ${cleanData.length} rows from ${filename}`);
+        }
+        
+        function processDV360Data(data) {
+            // Process DV360 CSV data
+            const cleanData = data.filter(row => 
+                row.Date && row.Campaign && row['Line Item'] && 
+                row.Date !== 'null' && row.Campaign !== 'null' && row['Line Item'] !== 'null'
+            );
+            
+            return cleanData.map(row => ({
+                ...row,
+                Revenue: parseFloat(row['Revenue (Adv Currency)'] || 0),
+                Impressions: parseInt(row.Impressions || 0),
+                Clicks: parseInt(row.Clicks || 0),
+                ViewableImpressions: parseInt(row['Active View: Viewable Impressions'] || 0),
+                PostClickConversions: parseFloat(row['Post-Click Conversions'] || 0),
+                PostViewConversions: parseFloat(row['Post-View Conversions'] || 0),
+                TotalConversions: parseFloat(row['Total Conversions'] || 0),
+                
+                // Determine audience type and segment
+                AudienceType: determineAudienceType(row['Line Item']),
+                AudienceSegment: extractAudienceSegment(row['Line Item']),
+                
+                // Extract campaign type
+                CampaignType: row.Campaign ? row.Campaign.split('_')[3] || row.Campaign : 'Unknown'
+            }));
+        }
+        
+        function processGoogleAdsData(data) {
+            // Process Google Ads CSV data - adjust field mapping as needed
+            const cleanData = data.filter(row => 
+                row.Date && row.Campaign
+            );
+            
+            return cleanData.map(row => ({
+                ...row,
+                Revenue: parseFloat(row.Cost || row['Cost (Local Currency)'] || 0),
+                Impressions: parseInt(row.Impressions || 0),
+                Clicks: parseInt(row.Clicks || 0),
+                ViewableImpressions: parseInt(row.Impressions || 0), // Fallback
+                PostClickConversions: parseFloat(row.Conversions || 0),
+                PostViewConversions: parseFloat(row['View-through Conversions'] || 0),
+                TotalConversions: parseFloat(row.Conversions || 0) + parseFloat(row['View-through Conversions'] || 0),
+                
+                AudienceType: determineGoogleAdsAudienceType(row['Ad Group'] || row.Campaign),
+                AudienceSegment: row['Ad Group'] || 'Unknown',
+                CampaignType: row.Campaign || 'Unknown'
+            }));
+        }
+        
+        function processSocialData(data) {
+            // Process Social Media CSV data - adjust field mapping as needed
+            const cleanData = data.filter(row => 
+                row.Date && row.Campaign
+            );
+            
+            return cleanData.map(row => ({
+                ...row,
+                Revenue: parseFloat(row['Amount Spent'] || row.Spend || 0),
+                Impressions: parseInt(row.Impressions || row.Reach || 0),
+                Clicks: parseInt(row.Clicks || row['Link Clicks'] || 0),
+                ViewableImpressions: parseInt(row.Impressions || row.Reach || 0),
+                PostClickConversions: parseFloat(row.Conversions || row.Results || 0),
+                PostViewConversions: parseFloat(row['View Conversions'] || 0),
+                TotalConversions: parseFloat(row.Conversions || row.Results || 0),
+                
+                AudienceType: determineSocialAudienceType(row['Ad Set Name'] || row.Campaign),
+                AudienceSegment: row['Ad Set Name'] || 'Unknown',
+                CampaignType: row.Campaign || 'Unknown'
+            }));
+        }
+        
+        function determineAudienceType(lineItem) {
+            if (!lineItem) return 'Other';
+            
+            if (lineItem.includes('1P')) {
+                return '1st Party';
+            } else if (lineItem.includes('CONV') || lineItem.includes('CONVERGED')) {
+                return 'Converged';
+            } else {
+                return 'Other';
+            }
+        }
+        
+        function determineGoogleAdsAudienceType(adGroup) {
+            if (!adGroup) return 'Other';
+            
+            if (adGroup.toLowerCase().includes('1p') || adGroup.toLowerCase().includes('first party')) {
+                return '1st Party';
+            } else if (adGroup.toLowerCase().includes('conv') || adGroup.toLowerCase().includes('similar')) {
+                return 'Converged';
+            } else {
+                return 'Other';
+            }
+        }
+        
+        function determineSocialAudienceType(adSetName) {
+            if (!adSetName) return 'Other';
+            
+            if (adSetName.toLowerCase().includes('custom') || adSetName.toLowerCase().includes('retargeting')) {
+                return '1st Party';
+            } else if (adSetName.toLowerCase().includes('lookalike') || adSetName.toLowerCase().includes('similar')) {
+                return 'Converged';
+            } else {
+                return 'Other';
+            }
+        }
+        
+        function extractAudienceSegment(lineItem) {
+            if (!lineItem) return 'Unknown';
+            
+            // Extract meaningful audience segment names from line item
+            if (lineItem.includes('1P')) {
+                // For 1st party, look for patterns after 1P
+                const parts = lineItem.split('_');
+                const fpIndex = parts.findIndex(part => part.includes('1P'));
+                if (fpIndex >= 0 && fpIndex < parts.length - 1) {
+                    return parts.slice(Math.max(0, fpIndex - 1), fpIndex + 2).join('_');
+                }
+            } else if (lineItem.includes('CONV') || lineItem.includes('CONVERGED')) {
+                // For converged, extract relevant parts
+                const parts = lineItem.split('_');
+                const convIndex = parts.findIndex(part => part.includes('CONV'));
+                if (convIndex >= 0) {
+                    return parts.slice(Math.max(0, convIndex - 1), convIndex + 2).join('_');
+                }
+            }
+            
+            // Truncate long names for readability
+            return lineItem.length > 30 ? lineItem.substring(0, 30) + '...' : lineItem;
+        }
+        
+        function updateDashboard() {
+            document.getElementById('analytics-dashboard').style.display = 'block';
+            filteredData = getFilteredData();
+            updateMetrics();
+            updateTimeSeriesChart();
+            updateAudienceChart();
+            updateCampaignTable();
+            updateAudienceTable();
+            updateAudienceSegmentTables();
+            updateAudienceComparison();
+        }
+        
+        function updateMetrics() {
+            const data = filteredData;
+            
+            const totals = data.reduce((acc, row) => ({
+                impressions: acc.impressions + row.Impressions,
+                clicks: acc.clicks + row.Clicks,
+                revenue: acc.revenue + row.Revenue,
+                viewableImpressions: acc.viewableImpressions + row.ViewableImpressions,
+                totalConversions: acc.totalConversions + row.TotalConversions,
+                postClickConversions: acc.postClickConversions + row.PostClickConversions,
+                postViewConversions: acc.postViewConversions + row.PostViewConversions
+            }), { 
+                impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0,
+                totalConversions: 0, postClickConversions: 0, postViewConversions: 0
+            });
+            
+            const ctr = totals.clicks / totals.impressions * 100;
+            const conversionRate = totals.totalConversions / totals.impressions * 100;
+            
+            document.getElementById('total-impressions').textContent = totals.impressions.toLocaleString();
+            document.getElementById('total-clicks').textContent = totals.clicks.toLocaleString();
+            document.getElementById('total-revenue').textContent = totals.revenue.toLocaleString();
+            document.getElementById('overall-ctr').textContent = ctr.toFixed(3) + '%';
+            document.getElementById('total-conversions').textContent = totals.totalConversions.toLocaleString();
+            document.getElementById('conversion-rate').textContent = conversionRate.toFixed(4) + '%';
+            document.getElementById('post-click-conversions').textContent = totals.postClickConversions.toLocaleString();
+            document.getElementById('post-view-conversions').textContent = totals.postViewConversions.toLocaleString();
+        }
+        
+        function updateTimeSeriesChart() {
+            const data = filteredData;
+            
+            // Group by date
+            const dailyData = {};
+            data.forEach(row => {
+                if (!dailyData[row.Date]) {
+                    dailyData[row.Date] = { impressions: 0, clicks: 0, revenue: 0, conversions: 0 };
+                }
+                dailyData[row.Date].impressions += row.Impressions;
+                dailyData[row.Date].clicks += row.Clicks;
+                dailyData[row.Date].revenue += row.Revenue;
+                dailyData[row.Date].conversions += row.TotalConversions;
+            });
+            
+            const dates = Object.keys(dailyData).sort();
+            const impressions = dates.map(date => dailyData[date].impressions);
+            const clicks = dates.map(date => dailyData[date].clicks);
+            const revenue = dates.map(date => dailyData[date].revenue);
+            const conversions = dates.map(date => dailyData[date].conversions);
+            const ctr = dates.map(date => dailyData[date].clicks / dailyData[date].impressions * 100);
+            
+            const ctx = document.getElementById('time-series-chart').getContext('2d');
+            
+            if (timeSeriesChart) {
+                timeSeriesChart.destroy();
+            }
+            
+            timeSeriesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Impressions',
+                        data: impressions,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Add metric toggle functionality
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    const metric = btn.dataset.metric;
+                    let newData, label, color;
+                    
+                    switch(metric) {
+                        case 'impressions':
+                            newData = impressions;
+                            label = 'Impressions';
+                            color = '#3498db';
+                            break;
+                        case 'clicks':
+                            newData = clicks;
+                            label = 'Clicks';
+                            color = '#e74c3c';
+                            break;
+                        case 'revenue':
+                            newData = revenue;
+                            label = 'Revenue (PLN)';
+                            color = '#2ecc71';
+                            break;
+                        case 'ctr':
+                            newData = ctr;
+                            label = 'CTR (%)';
+                            color = '#f39c12';
+                            break;
+                        case 'conversions':
+                            newData = conversions;
+                            label = 'Conversions';
+                            color = '#9b59b6';
+                            break;
+                    }
+                    
+                    timeSeriesChart.data.datasets[0].data = newData;
+                    timeSeriesChart.data.datasets[0].label = label;
+                    timeSeriesChart.data.datasets[0].borderColor = color;
+                    timeSeriesChart.data.datasets[0].backgroundColor = color + '20';
+                    timeSeriesChart.update();
+                });
+            });
+        }
+        
+        function updateAudienceChart() {
+            const data = filteredData;
+            
+            // Group by audience type
+            const audienceData = {};
+            data.forEach(row => {
+                if (!audienceData[row.AudienceType]) {
+                    audienceData[row.AudienceType] = { impressions: 0, clicks: 0, revenue: 0 };
+                }
+                audienceData[row.AudienceType].impressions += row.Impressions;
+                audienceData[row.AudienceType].clicks += row.Clicks;
+                audienceData[row.AudienceType].revenue += row.Revenue;
+            });
+            
+            const audienceTypes = Object.keys(audienceData);
+            const impressions = audienceTypes.map(type => audienceData[type].impressions);
+            const ctrs = audienceTypes.map(type => audienceData[type].clicks / audienceData[type].impressions * 100);
+            
+            const ctx = document.getElementById('audience-chart').getContext('2d');
+            
+            if (audienceChart) {
+                audienceChart.destroy();
+            }
+            
+            audienceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: audienceTypes,
+                    datasets: [
+                        {
+                            label: 'Impressions',
+                            data: impressions,
+                            backgroundColor: ['#3498db', '#e74c3c', '#f39c12'],
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'CTR (%)',
+                            data: ctrs,
+                            backgroundColor: ['rgba(52, 152, 219, 0.6)', 'rgba(231, 76, 60, 0.6)', 'rgba(243, 156, 18, 0.6)'],
+                            type: 'line',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateCampaignTable() {
+            const data = filteredData;
+            
+            // Group by campaign
+            const campaignData = {};
+            data.forEach(row => {
+                if (!campaignData[row.CampaignType]) {
+                    campaignData[row.CampaignType] = { 
+                        impressions: 0, clicks: 0, revenue: 0, conversions: 0 
+                    };
+                }
+                campaignData[row.CampaignType].impressions += row.Impressions;
+                campaignData[row.CampaignType].clicks += row.Clicks;
+                campaignData[row.CampaignType].revenue += row.Revenue;
+                campaignData[row.CampaignType].conversions += row.TotalConversions;
+            });
+            
+            const tbody = document.querySelector('#campaign-table tbody');
+            tbody.innerHTML = '';
+            
+            Object.entries(campaignData).forEach(([campaign, metrics]) => {
+                const ctr = (metrics.clicks / metrics.impressions * 100).toFixed(3);
+                const cpm = (metrics.revenue / metrics.impressions * 1000).toFixed(2);
+                const convRate = (metrics.conversions / metrics.impressions * 100).toFixed(4);
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${campaign}</td>
+                    <td>${metrics.impressions.toLocaleString()}</td>
+                    <td>${metrics.clicks.toLocaleString()}</td>
+                    <td>${metrics.revenue.toFixed(2)}</td>
+                    <td>${ctr}%</td>
+                    <td>${cpm}</td>
+                    <td>${metrics.conversions.toLocaleString()}</td>
+                    <td>${convRate}%</td>
+                `;
+            });
+        }
+        
+        function updateAudienceTable() {
+            const data = filteredData;
+            
+            // Group by audience type
+            const audienceData = {};
+            data.forEach(row => {
+                if (!audienceData[row.AudienceType]) {
+                    audienceData[row.AudienceType] = { 
+                        impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0, conversions: 0 
+                    };
+                }
+                audienceData[row.AudienceType].impressions += row.Impressions;
+                audienceData[row.AudienceType].clicks += row.Clicks;
+                audienceData[row.AudienceType].revenue += row.Revenue;
+                audienceData[row.AudienceType].viewableImpressions += row.ViewableImpressions;
+                audienceData[row.AudienceType].conversions += row.TotalConversions;
+            });
+            
+            const tbody = document.querySelector('#audience-table tbody');
+            tbody.innerHTML = '';
+            
+            Object.entries(audienceData).forEach(([audience, metrics]) => {
+                const ctr = (metrics.clicks / metrics.impressions * 100).toFixed(3);
+                const cpm = (metrics.revenue / metrics.impressions * 1000).toFixed(2);
+                const viewability = (metrics.viewableImpressions / metrics.impressions * 100).toFixed(1);
+                const convRate = (metrics.conversions / metrics.impressions * 100).toFixed(4);
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${audience}</td>
+                    <td>${metrics.impressions.toLocaleString()}</td>
+                    <td>${metrics.clicks.toLocaleString()}</td>
+                    <td>${ctr}%</td>
+                    <td>${cpm}</td>
+                    <td>${viewability}%</td>
+                    <td>${metrics.conversions.toLocaleString()}</td>
+                    <td>${convRate}%</td>
+                `;
+            });
+        }
+        
+        function updateAudienceSegmentTables() {
+            updateFirstPartySegments();
+            updateConvergedSegments();
+        }
+        
+        function updateFirstPartySegments() {
+            const data = filteredData.filter(row => row.AudienceType === '1st Party');
+            
+            // Group by audience segment
+            const segmentData = {};
+            data.forEach(row => {
+                if (!segmentData[row.AudienceSegment]) {
+                    segmentData[row.AudienceSegment] = { 
+                        impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0,
+                        postClickConversions: 0, postViewConversions: 0, totalConversions: 0
+                    };
+                }
+                segmentData[row.AudienceSegment].impressions += row.Impressions;
+                segmentData[row.AudienceSegment].clicks += row.Clicks;
+                segmentData[row.AudienceSegment].revenue += row.Revenue;
+                segmentData[row.AudienceSegment].viewableImpressions += row.ViewableImpressions;
+                segmentData[row.AudienceSegment].postClickConversions += row.PostClickConversions;
+                segmentData[row.AudienceSegment].postViewConversions += row.PostViewConversions;
+                segmentData[row.AudienceSegment].totalConversions += row.TotalConversions;
+            });
+            
+            const tbody = document.querySelector('#fp-segments-table tbody');
+            tbody.innerHTML = '';
+            
+            Object.entries(segmentData).forEach(([segment, metrics]) => {
+                const ctr = (metrics.clicks / metrics.impressions * 100).toFixed(3);
+                const cpm = (metrics.revenue / metrics.impressions * 1000).toFixed(2);
+                const viewability = (metrics.viewableImpressions / metrics.impressions * 100).toFixed(1);
+                const convRate = (metrics.totalConversions / metrics.impressions * 100).toFixed(4);
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td title="${segment}">${segment.length > 25 ? segment.substring(0, 25) + '...' : segment}</td>
+                    <td>${metrics.impressions.toLocaleString()}</td>
+                    <td>${metrics.clicks.toLocaleString()}</td>
+                    <td>${ctr}%</td>
+                    <td>${cpm}</td>
+                    <td>${viewability}%</td>
+                    <td>${convRate}%</td>
+                    <td>${metrics.postClickConversions.toFixed(2)}</td>
+                    <td>${metrics.postViewConversions.toFixed(2)}</td>
+                `;
+            });
+            
+            // Create chart for 1P segments
+            createSegmentChart('fp-segments-chart', segmentData, '1st Party Audience Segments');
+        }
+        
+        function updateConvergedSegments() {
+            const data = filteredData.filter(row => row.AudienceType === 'Converged');
+            
+            // Group by audience segment
+            const segmentData = {};
+            data.forEach(row => {
+                if (!segmentData[row.AudienceSegment]) {
+                    segmentData[row.AudienceSegment] = { 
+                        impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0,
+                        postClickConversions: 0, postViewConversions: 0, totalConversions: 0
+                    };
+                }
+                segmentData[row.AudienceSegment].impressions += row.Impressions;
+                segmentData[row.AudienceSegment].clicks += row.Clicks;
+                segmentData[row.AudienceSegment].revenue += row.Revenue;
+                segmentData[row.AudienceSegment].viewableImpressions += row.ViewableImpressions;
+                segmentData[row.AudienceSegment].postClickConversions += row.PostClickConversions;
+                segmentData[row.AudienceSegment].postViewConversions += row.PostViewConversions;
+                segmentData[row.AudienceSegment].totalConversions += row.TotalConversions;
+            });
+            
+            const tbody = document.querySelector('#cnv-segments-table tbody');
+            tbody.innerHTML = '';
+            
+            Object.entries(segmentData).forEach(([segment, metrics]) => {
+                const ctr = (metrics.clicks / metrics.impressions * 100).toFixed(3);
+                const cpm = (metrics.revenue / metrics.impressions * 1000).toFixed(2);
+                const viewability = (metrics.viewableImpressions / metrics.impressions * 100).toFixed(1);
+                const convRate = (metrics.totalConversions / metrics.impressions * 100).toFixed(4);
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td title="${segment}">${segment.length > 25 ? segment.substring(0, 25) + '...' : segment}</td>
+                    <td>${metrics.impressions.toLocaleString()}</td>
+                    <td>${metrics.clicks.toLocaleString()}</td>
+                    <td>${ctr}%</td>
+                    <td>${cpm}</td>
+                    <td>${viewability}%</td>
+                    <td>${convRate}%</td>
+                    <td>${metrics.postClickConversions.toFixed(2)}</td>
+                    <td>${metrics.postViewConversions.toFixed(2)}</td>
+                `;
+            });
+            
+            // Create chart for CNV segments
+            createSegmentChart('cnv-segments-chart', segmentData, 'Converged Audience Segments');
+        }
+        
+        function createSegmentChart(canvasId, segmentData, title) {
+            const segments = Object.keys(segmentData).slice(0, 10); // Top 10 segments
+            const ctrs = segments.map(segment => segmentData[segment].clicks / segmentData[segment].impressions * 100);
+            const impressions = segments.map(segment => segmentData[segment].impressions);
+            
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            // Destroy existing chart
+            if (canvasId === 'fp-segments-chart' && fpSegmentsChart) {
+                fpSegmentsChart.destroy();
+            } else if (canvasId === 'cnv-segments-chart' && cnvSegmentsChart) {
+                cnvSegmentsChart.destroy();
+            }
+            
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: segments.map(s => s.length > 15 ? s.substring(0, 15) + '...' : s),
+                    datasets: [
+                        {
+                            label: 'Impressions',
+                            data: impressions,
+                            backgroundColor: 'rgba(52, 152, 219, 0.6)',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'CTR (%)',
+                            data: ctrs,
+                            backgroundColor: 'rgba(231, 76, 60, 0.8)',
+                            type: 'line',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Impressions'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            title: {
+                                display: true,
+                                text: 'CTR (%)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Store chart reference
+            if (canvasId === 'fp-segments-chart') {
+                fpSegmentsChart = chart;
+            } else if (canvasId === 'cnv-segments-chart') {
+                cnvSegmentsChart = chart;
+            }
+        }
+        
+        function updateAudienceComparison() {
+            const data = filteredData;
+            
+            // Calculate metrics for 1st Party and Converged audiences
+            const fpData = data.filter(row => row.AudienceType === '1st Party');
+            const convData = data.filter(row => row.AudienceType === 'Converged');
+            
+            const fpMetrics = calculateMetrics(fpData);
+            const convMetrics = calculateMetrics(convData);
+            
+            // Update 1st Party cards
+            document.getElementById('fp-impressions').textContent = fpMetrics.impressions.toLocaleString();
+            document.getElementById('fp-ctr').textContent = fpMetrics.ctr.toFixed(3) + '%';
+            document.getElementById('fp-cpm').textContent = fpMetrics.cpm.toFixed(2);
+            document.getElementById('fp-viewability').textContent = fpMetrics.viewability.toFixed(1) + '%';
+            document.getElementById('fp-conversions').textContent = fpMetrics.conversions.toLocaleString();
+            document.getElementById('fp-conv-rate').textContent = fpMetrics.conversionRate.toFixed(4) + '%';
+            
+            // Update Converged cards
+            document.getElementById('conv-impressions').textContent = convMetrics.impressions.toLocaleString();
+            document.getElementById('conv-ctr').textContent = convMetrics.ctr.toFixed(3) + '%';
+            document.getElementById('conv-cpm').textContent = convMetrics.cpm.toFixed(2);
+            document.getElementById('conv-viewability').textContent = convMetrics.viewability.toFixed(1) + '%';
+            document.getElementById('conv-conversions').textContent = convMetrics.conversions.toLocaleString();
+            document.getElementById('conv-conv-rate').textContent = convMetrics.conversionRate.toFixed(4) + '%';
+            
+            // Create improved comparison chart with proper scaling
+            const ctx = document.getElementById('audience-comparison-chart').getContext('2d');
+            
+            if (audienceComparisonChart) {
+                audienceComparisonChart.destroy();
+            }
+            
+            // Calculate max values for proper scaling
+            const maxCtr = Math.max(fpMetrics.ctr, convMetrics.ctr);
+            const maxViewability = Math.max(fpMetrics.viewability, convMetrics.viewability);
+            const maxConvRate = Math.max(fpMetrics.conversionRate, convMetrics.conversionRate);
+            const maxCpmEff = Math.max(100 / fpMetrics.cpm, 100 / convMetrics.cpm);
+            
+            audienceComparisonChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['CTR (%)', 'Viewability (%)', 'Conv. Rate (%)', 'CPM Efficiency'],
+                    datasets: [
+                        {
+                            label: '1st Party',
+                            data: [
+                                (fpMetrics.ctr / maxCtr) * 100,
+                                (fpMetrics.viewability / maxViewability) * 100,
+                                (fpMetrics.conversionRate / maxConvRate) * 100,
+                                ((100 / fpMetrics.cpm) / maxCpmEff) * 100
+                            ],
+                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            borderColor: '#3498db',
+                            pointBackgroundColor: '#3498db',
+                            pointBorderColor: '#3498db',
+                            pointRadius: 6
+                        },
+                        {
+                            label: 'Converged',
+                            data: [
+                                (convMetrics.ctr / maxCtr) * 100,
+                                (convMetrics.viewability / maxViewability) * 100,
+                                (convMetrics.conversionRate / maxConvRate) * 100,
+                                ((100 / convMetrics.cpm) / maxCpmEff) * 100
+                            ],
+                            backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                            borderColor: '#e74c3c',
+                            pointBackgroundColor: '#e74c3c',
+                            pointBorderColor: '#e74c3c',
+                            pointRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Audience Performance Comparison (Scaled to Max Values)'
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function calculateMetrics(data) {
+            const totals = data.reduce((acc, row) => ({
+                impressions: acc.impressions + row.Impressions,
+                clicks: acc.clicks + row.Clicks,
+                revenue: acc.revenue + row.Revenue,
+                viewableImpressions: acc.viewableImpressions + row.ViewableImpressions,
+                conversions: acc.conversions + row.TotalConversions
+            }), { impressions: 0, clicks: 0, revenue: 0, viewableImpressions: 0, conversions: 0 });
+            
+            return {
+                impressions: totals.impressions,
+                clicks: totals.clicks,
+                revenue: totals.revenue,
+                conversions: totals.conversions,
+                ctr: totals.clicks / totals.impressions * 100,
+                cpm: totals.revenue / totals.impressions * 1000,
+                viewability: totals.viewableImpressions / totals.impressions * 100,
+                conversionRate: totals.conversions / totals.impressions * 100
+            };
+        }
+        
+        function getFilteredData() {
+            let data = campaignData;
+            
+            // Filter by platform
+            if (currentPlatform !== 'all') {
+                data = data.filter(row => row.Platform === currentPlatform);
+            }
+            
+            // Filter by date range
+            if (dateFilter.start && dateFilter.end) {
+                const startDate = new Date(dateFilter.start);
+                const endDate = new Date(dateFilter.end);
+                data = data.filter(row => {
+                    const rowDate = new Date(row.Date);
+                    return rowDate >= startDate && rowDate <= endDate;
+                });
+            }
+            
+            return data;
+        }
+    </script>
+</body>
+</html>
+    </script>
+</body>
+</html>
