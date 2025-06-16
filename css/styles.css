@@ -396,6 +396,9 @@ p {
   gap: var(--spacing-2xl);
   margin-bottom: var(--spacing-2xl);
 }
+.dashboard.full-width {
+  grid-template-columns: 1fr;
+}
 
 /* ===== UTILITY CLASSES ===== */
 .sr-only {
