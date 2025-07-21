@@ -1,389 +1,275 @@
-/**
- * Campaign Analyzer - Main Application Logic
- * Handles initialization, state management, and core functionality
- */
+// js/app.js
 
-// Global state variables
-let campaignData = [];
-let filteredData = [];
-let currentPlatform = 'all';
-let currentBusinessType = 'all';
-let dateFilter = { start: null, end: null };
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Campaign Analyzer app loaded.');
 
-// Chart instances
-let timeSeriesChart = null;
-let audienceChart = null;
-let audienceComparisonChart = null;
-let fpSegmentsChart = null;
-let cnvSegmentsChart = null;
-let impressionsAndCTRChart = null;
-let revenueAndConversionsChart = null;
+    let processedCampaignData = []; // Store processed data globally
 
-/**
- * Initialize the application when DOM is loaded
- */
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Campaign Analyzer - Initializing application...');
-    
-    initializeUpload();
-    initializeNavigation();
-    initializeDateFilters();
-    
-    console.log('Campaign Analyzer - Application initialized successfully');
+    // Function to render the UI
+    function renderUI() {
+        const appDiv = document.getElementById('app');
+        appDiv.innerHTML = `
+            <p>Upload your CSV report here.</p>
+            <input type="file" id="csvFileInput" accept=".csv" />
+            <div id="filters-container"></div>
+            <div id="breakdowns-container"></div>
+        `;
+
+        document.getElementById('csvFileInput').addEventListener('change', handleFileUpload);
+    }
+
+    // Function to handle file upload
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const csvContent = e.target.result;
+                console.log('CSV file loaded. Content length:', csvContent.length);
+                try {
+                    const rawData = parseCSV(csvContent);
+                    processedCampaignData = processData(rawData);
+                    console.log('Processed Data:', processedCampaignData);
+                    alert('CSV file loaded and processed successfully!');
+                    renderFilters(processedCampaignData);
+                    renderBreakdowns(processedCampaignData);
+                } catch (error) {
+                    console.error('Error processing CSV:', error);
+                    alert('Error processing CSV: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    // Placeholder for rendering filters
+    function renderFilters(data) {
+        const filtersContainer = document.getElementById('filters-container');
+        filtersContainer.innerHTML = `
+            <h2>Filters</h2>
+            <div class="filter-group">
+                <label for="datePicker">Date Range:</label>
+                <input type="date" id="startDate">
+                <input type="date" id="endDate">
+            </div>
+            <div class="filter-group">
+                <label for="b2bB2cSwitcher">B2B / B2C:</label>
+                <select id="b2bB2cSwitcher">
+                    <option value="all">All</option>
+                    ${[...new Set(data.map(row => row.B2B_B2C_Type))].filter(type => type !== null).map(type => `<option value="${type}">${type}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="campaignFilter">Campaign ID:</label>
+                <select id="campaignFilter">
+                    <option value="all">All</option>
+                    ${[...new Set(data.map(row => row.CampaignID))].filter(id => id !== null).map(id => `<option value="${id}">${id}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="ampIdFilter">AMP ID:</label>
+                <select id="ampIdFilter">
+                    <option value="all">All</option>
+                    ${[...new Set(data.map(row => row.AMPID))].filter(id => id !== null).map(id => `<option value="${id}">${id}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="audienceTypeFilter">Audience Type:</label>
+                <select id="audienceTypeFilter">
+                    <option value="all">All</option>
+                    ${[...new Set(data.map(row => row.AudienceType))].filter(type => type !== 'Unknown').map(type => `<option value="${type}">${type}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="optimizedTargetingFilter">Optimized Targeting:</label>
+                <select id="optimizedTargetingFilter">
+                    <option value="all">All</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="customBiddingFilter">Custom Bidding:</label>
+                <select id="customBiddingFilter">
+                    <option value="all">All</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="optimizationTypeFilter">FL/GA Optimization:</label>
+                <select id="optimizationTypeFilter">
+                    <option value="all">All</option>
+                    ${[...new Set(data.map(row => row.OptimizationType))].filter(type => type !== 'Unknown').map(type => `<option value="${type}">${type}</option>`).join('')}
+                </select>
+            </div>
+        `;
+
+        // Add event listeners to filters to trigger data re-rendering
+        filtersContainer.querySelectorAll('select, input[type="date"]').forEach(filter => {
+            filter.addEventListener('change', applyFiltersAndRenderBreakdowns);
+        });
+    }
+
+    // Placeholder for applying filters and rendering breakdowns
+    function applyFiltersAndRenderBreakdowns() {
+        let filteredData = [...processedCampaignData];
+
+        // Apply date filter
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        if (startDate) {
+            filteredData = filteredData.filter(row => row.Date >= startDate);
+        }
+        if (endDate) {
+            filteredData = filteredData.filter(row => row.Date <= endDate);
+        }
+
+        // Apply Campaign ID filter
+        const selectedCampaignId = document.getElementById('campaignFilter').value;
+        if (selectedCampaignId !== 'all') {
+            filteredData = filteredData.filter(row => row.CampaignID === selectedCampaignId);
+        }
+
+        // Apply AMP ID filter
+        const selectedAmpId = document.getElementById('ampIdFilter').value;
+        if (selectedAmpId !== 'all') {
+            filteredData = filteredData.filter(row => row.AMPID === selectedAmpId);
+        }
+
+        // Apply Audience Type filter
+        const selectedAudienceType = document.getElementById('audienceTypeFilter').value;
+        if (selectedAudienceType !== 'all') {
+            filteredData = filteredData.filter(row => row.AudienceType === selectedAudienceType);
+        }
+
+        // Apply Optimized Targeting filter
+        const selectedOptimizedTargeting = document.getElementById('optimizedTargetingFilter').value;
+        if (selectedOptimizedTargeting !== 'all') {
+            filteredData = filteredData.filter(row => row.OptimizedTargeting === selectedOptimizedTargeting);
+        }
+
+        // Apply Custom Bidding filter
+        const selectedCustomBidding = document.getElementById('customBiddingFilter').value;
+        if (selectedCustomBidding !== 'all') {
+            filteredData = filteredData.filter(row => row.CustomBidding === selectedCustomBidding);
+        }
+
+        // Apply FL/GA Optimization filter
+        const selectedOptimizationType = document.getElementById('optimizationTypeFilter').value;
+        if (selectedOptimizationType !== 'all') {
+            filteredData = filteredData.filter(row => row.OptimizationType === selectedOptimizationType);
+        }
+
+        // Apply B2B/B2C filter
+        const selectedB2B_B2C_Type = document.getElementById('b2bB2cSwitcher').value;
+        if (selectedB2B_B2C_Type !== 'all') {
+            filteredData = filteredData.filter(row => row.B2B_B2C_Type === selectedB2B_B2C_Type);
+        }
+
+        renderBreakdowns(filteredData);
+    }
+
+    // Placeholder for rendering breakdowns
+    function renderBreakdowns(data) {
+        const breakdownsContainer = document.getElementById('breakdowns-container');
+        breakdownsContainer.innerHTML = `
+            <h2>Breakdowns</h2>
+            <div id="overview-summary"></div>
+            <div class="chart-section">
+                <h3>Impressions & Clicks - Daily</h3>
+                <canvas id="impressionsClicksDailyChart"></canvas>
+            </div>
+            <div class="chart-section">
+                <h3>Impressions & Clicks - Weekly</h3>
+                <canvas id="impressionsClicksWeeklyChart"></canvas>
+            </div>
+            <div class="chart-section">
+                <h3>Conversions & CVR - Daily</h3>
+                <canvas id="conversionsCVRDailyChart"></canvas>
+            </div>
+            <div class="chart-section">
+                <h3>Conversions & CVR - Weekly</h3>
+                <canvas id="conversionsCVRWeeklyChart"></canvas>
+            </div>
+            <div class="chart-section">
+                <h3>Revenue & CPC - Daily</h3>
+                <canvas id="revenueCPCDailyChart"></canvas>
+            </div>
+            <div class="chart-section">
+                <h3>Revenue & CPC - Weekly</h3>
+                <canvas id="revenueCPCWeeklyChart"></canvas>
+            </div>
+            <div class="chart-section">
+                <h3>Revenue & CPA - Daily</h3>
+                <canvas id="revenueCPADailyChart"></canvas>
+            </div>
+            <div class="chart-section">
+                <h3>Revenue & CPA - Weekly</h3>
+                <canvas id="revenueCPAWeeklyChart"></canvas>
+            </div>
+            <div id="audience-types-table"></div>
+            <div id="optimized-targeting-table"></div>
+            <div id="audiences-table"></div>
+            <div id="custom-bidding-table"></div>
+            <div id="fl-ga-optimization-table"></div>
+            <div id="creative-lines-table"></div>
+            <div class="chart-section">
+                <h3>Daily Trends (CTR, PV CVR, PC CVR)</h3>
+                <canvas id="dailyTrendChart"></canvas>
+            </div>
+            <div class="chart-section">
+                <h3>Weekly Trends (CTR, PV CVR, PC CVR)</h3>
+                <canvas id="weeklyTrendChart"></canvas>
+            </div>
+            <div class="chart-section">
+                <h3>Weekly Growth Trends (CTR+CPC, PV CVR, PC CVR, CPA)</h3>
+                <canvas id="weeklyGrowthChart"></canvas>
+            </div>
+        `;
+
+        // Render overview summary
+        const totalImpressions = data.reduce((sum, row) => sum + row.Impressions, 0);
+        const totalClicks = data.reduce((sum, row) => sum + row.Click, 0);
+        const totalRevenue = data.reduce((sum, row) => sum + row['Revenue (Advertiser Currency)'], 0);
+        const totalConversions = data.reduce((sum, row) => sum + row['Total Conversions'], 0);
+
+        document.getElementById('overview-summary').innerHTML = `
+            <h3>Overview Summary</h3>
+            <p>Total Impressions: ${totalImpressions.toLocaleString()}</p>
+            <p>Total Clicks: ${totalClicks.toLocaleString()}</p>
+            <p>Total Conversions: ${totalConversions.toLocaleString()}</p>
+            <p>Total Revenue: ${totalRevenue.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</p>
+        `;
+
+        // Aggregate data for charts
+        const dailyAggregatedData = aggregateDailyData(data);
+        const weeklyAggregatedData = aggregateWeeklyData(data);
+
+        // Render charts
+        renderImpressionsClicksChart(dailyAggregatedData, 'impressionsClicksDailyChart', 'daily');
+        renderImpressionsClicksChart(weeklyAggregatedData, 'impressionsClicksWeeklyChart', 'weekly');
+        renderConversionsCVRChart(dailyAggregatedData, 'conversionsCVRDailyChart', 'daily');
+        renderConversionsCVRChart(weeklyAggregatedData, 'conversionsCVRWeeklyChart', 'weekly');
+        renderRevenueCPCChart(dailyAggregatedData, 'revenueCPCDailyChart', 'daily');
+        renderRevenueCPCChart(weeklyAggregatedData, 'revenueCPCWeeklyChart', 'weekly');
+        renderRevenueCPAChart(dailyAggregatedData, 'revenueCPADailyChart', 'daily');
+        renderRevenueCPAChart(weeklyAggregatedData, 'revenueCPAWeeklyChart', 'weekly');
+
+        renderTrendChart(dailyAggregatedData, 'dailyTrendChart', 'daily');
+        renderTrendChart(weeklyAggregatedData, 'weeklyTrendChart', 'weekly');
+        renderGrowthChart(weeklyAggregatedData, 'weeklyGrowthChart', 'weekly');
+
+        // Render tables
+        renderTable('audience-types-table', 'Audience Types Breakdown', aggregateDataByDimension(data, 'AudienceType'));
+        renderTable('optimized-targeting-table', 'Optimized Targeting Breakdown', aggregateDataByDimension(data, 'OptimizedTargeting'));
+        renderTable('audiences-table', 'Audiences Breakdown', aggregateDataByDimension(data, 'AudienceName'));
+        renderTable('custom-bidding-table', 'Custom Bidding Breakdown', aggregateDataByDimension(data, 'CustomBidding'));
+        renderTable('fl-ga-optimization-table', 'FL/GA Optimization Breakdown', aggregateDataByDimension(data, 'OptimizationType'));
+        renderTable('creative-lines-table', 'Creative Lines Breakdown', aggregateDataByDimension(data, 'CreativeLine'));
+
+        breakdownsContainer.insertAdjacentHTML('beforeend', `<p>Displaying ${data.length} rows after filtering.</p>`);
+    }
+
+    renderUI();
 });
-
-/**
- * Initialize file upload functionality
- */
-function initializeUpload() {
-    const fileInput = document.getElementById('file-input');
-    const dropZone = document.getElementById('file-drop-zone');
-    
-    if (!fileInput || !dropZone) {
-        console.error('Upload elements not found');
-        return;
-    }
-    
-    // Click to upload
-    dropZone.addEventListener('click', function(e) {
-        e.preventDefault();
-        console.log('Drop zone clicked');
-        // Trigger file dialog - more reliable approach
-        fileInput.click();
-    });
-
-    // Keyboard accessibility - trigger click on Enter or Space
-    dropZone.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-            e.preventDefault();
-            fileInput.click();
-        }
-    });
-    
-    // File input change
-    fileInput.addEventListener('change', function(e) {
-        console.log('File input changed');
-        handleFiles(e.target.files);
-    });
-    
-    // Prevent default drag behaviors
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
-    
-    // Highlight drop zone when item is dragged over it
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, unhighlight, false);
-    });
-    
-    // Handle dropped files
-    dropZone.addEventListener('drop', handleDrop, false);
-}
-
-/**
- * Initialize platform and business type navigation
- */
-function initializeNavigation() {
-    // Platform navigation
-    document.querySelectorAll('.platform-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentPlatform = btn.dataset.platform;
-            updateDashboard();
-        });
-    });
-    
-    // Business type navigation
-    document.querySelectorAll('.business-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.business-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentBusinessType = btn.dataset.business;
-            updateDashboard();
-        });
-    });
-}
-
-/**
- * Initialize date filter functionality
- */
-function initializeDateFilters() {
-    const applyBtn = document.getElementById('apply-filter');
-    const clearBtn = document.getElementById('clear-filter');
-    
-    if (applyBtn) {
-        applyBtn.addEventListener('click', applyDateFilter);
-    }
-    
-    if (clearBtn) {
-        clearBtn.addEventListener('click', clearDateFilter);
-    }
-}
-
-/**
- * Prevent default drag behaviors
- */
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-/**
- * Highlight drop zone during drag
- */
-function highlight(e) {
-    const dropZone = document.getElementById('file-drop-zone');
-    if (dropZone) {
-        dropZone.classList.add('drag-over');
-    }
-}
-
-/**
- * Remove highlight from drop zone
- */
-function unhighlight(e) {
-    const dropZone = document.getElementById('file-drop-zone');
-    if (dropZone) {
-        dropZone.classList.remove('drag-over');
-    }
-}
-
-/**
- * Handle file drop
- */
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    console.log('Files dropped:', files.length);
-    handleFiles(files);
-}
-
-/**
- * Apply date filter
- */
-function applyDateFilter() {
-    const startDate = document.getElementById('start-date')?.value;
-    const endDate = document.getElementById('end-date')?.value;
-    
-    if (startDate && endDate) {
-        dateFilter.start = startDate;
-        dateFilter.end = endDate;
-        updateDashboard();
-        
-        // Show success message
-        showStatusMessage('Date filter applied successfully', 'success');
-    } else {
-        showStatusMessage('Please select both start and end dates', 'error');
-    }
-}
-
-/**
- * Clear date filter
- */
-function clearDateFilter() {
-    dateFilter.start = null;
-    dateFilter.end = null;
-    
-    const startDateInput = document.getElementById('start-date');
-    const endDateInput = document.getElementById('end-date');
-    
-    if (startDateInput) startDateInput.value = '';
-    if (endDateInput) endDateInput.value = '';
-    
-    updateDashboard();
-    showStatusMessage('Date filter cleared', 'info');
-}
-
-/**
- * Show status message to user
- */
-function showStatusMessage(message, type = 'info') {
-    const statusDiv = document.getElementById('file-status');
-    if (!statusDiv) return;
-    
-    const icons = {
-        success: '✅',
-        error: '❌',
-        info: 'ℹ️',
-        warning: '⚠️'
-    };
-    
-    statusDiv.innerHTML = `<p class="status-message ${type}">${icons[type]} ${message}</p>`;
-    
-    // Auto-clear after 5 seconds for non-error messages
-    if (type !== 'error') {
-        setTimeout(() => {
-            if (statusDiv.innerHTML.includes(message)) {
-                statusDiv.innerHTML = '';
-            }
-        }, 5000);
-    }
-}
-
-/**
- * Update the main dashboard
- */
-function updateDashboard() {
-    console.log('Updating dashboard...');
-    
-    const dashboard = document.getElementById('analytics-dashboard');
-    if (dashboard) {
-        dashboard.style.display = 'block';
-    }
-    
-    // Get filtered data based on current filters
-    filteredData = getFilteredData();
-    console.log(`Dashboard updated with ${filteredData.length} records`);
-    
-    // Update all dashboard components
-    if (window.Tables) {
-        window.Tables.updateMetrics();
-        window.Tables.updateCampaignTable();
-        window.Tables.updateAudienceTable();
-        window.Tables.updateAudienceSegmentTables();
-        window.Tables.updateFloodlightActivities();
-    }
-    
-    if (window.Charts) {
-        // Update new enhanced charts (A & B)
-        window.Charts.updateImpressionsAndCTRChart();
-        window.Charts.updateRevenueAndConversionsChart();
-        
-        // Legacy charts (hidden but functional for compatibility)
-        window.Charts.updateTimeSeriesChart();
-        window.Charts.updateAudienceChart();
-        window.Charts.updateAudienceComparison();
-        
-        // Initialize toggle functionalities
-        window.Charts.initializeChartToggles();
-    }
-}
-
-/**
- * Get filtered data based on current platform, business type, and date filters
- */
-function getFilteredData() {
-    let data = [...campaignData];
-    
-    // Filter by platform
-    if (currentPlatform !== 'all') {
-        data = data.filter(row => row.Platform === currentPlatform);
-    }
-    
-    // Filter by business type
-    if (currentBusinessType !== 'all') {
-        data = data.filter(row => row.BusinessType === currentBusinessType);
-    }
-    
-    // Filter by date range
-    if (dateFilter.start && dateFilter.end) {
-        const startDate = new Date(dateFilter.start);
-        const endDate = new Date(dateFilter.end);
-        data = data.filter(row => {
-            const rowDate = new Date(row.Date);
-            return rowDate >= startDate && rowDate <= endDate;
-        });
-    }
-    
-    return data;
-}
-
-/**
- * Calculate comprehensive metrics from data
- */
-function calculateMetrics(data) {
-    if (!data || data.length === 0) {
-        return {
-            impressions: 0,
-            clicks: 0,
-            revenue: 0,
-            conversions: 0,
-            ctr: 0,
-            cpm: 0,
-            viewability: 0,
-            conversionRate: 0
-        };
-    }
-    
-    const totals = data.reduce((acc, row) => ({
-        impressions: acc.impressions + (row.Impressions || 0),
-        clicks: acc.clicks + (row.Clicks || 0),
-        revenue: acc.revenue + (row.Revenue || 0),
-        viewableImpressions: acc.viewableImpressions + (row.ViewableImpressions || 0),
-        conversions: acc.conversions + (row.TotalConversions || 0)
-    }), { 
-        impressions: 0, 
-        clicks: 0, 
-        revenue: 0, 
-        viewableImpressions: 0, 
-        conversions: 0 
-    });
-    
-    return {
-        impressions: totals.impressions,
-        clicks: totals.clicks,
-        revenue: totals.revenue,
-        conversions: totals.conversions,
-        ctr: totals.impressions > 0 ? (totals.clicks / totals.impressions * 100) : 0,
-        cpm: totals.impressions > 0 ? (totals.revenue / totals.impressions * 1000) : 0,
-        viewability: totals.impressions > 0 ? (totals.viewableImpressions / totals.impressions * 100) : 0,
-        conversionRate: totals.clicks > 0 ? (totals.conversions / totals.clicks * 100) : 0
-    };
-}
-
-// Make functions available globally for other modules
-window.CampaignAnalyzer = {
-    // State
-    getCampaignData: () => campaignData,
-    getFilteredData: () => filteredData,
-    getCurrentPlatform: () => currentPlatform,
-    getCurrentBusinessType: () => currentBusinessType,
-    getDateFilter: () => dateFilter,
-    
-    // Core functions
-    updateDashboard,
-    calculateMetrics,
-    showStatusMessage,
-    
-    // Chart instances (for cleanup)
-    getChartInstances: () => ({
-        timeSeriesChart,
-        audienceChart,
-        audienceComparisonChart,
-        fpSegmentsChart,
-        cnvSegmentsChart,
-        impressionsAndCTRChart,
-        revenueAndConversionsChart
-    }),
-    
-    setChartInstance: (name, instance) => {
-        switch(name) {
-            case 'timeSeriesChart': timeSeriesChart = instance; break;
-            case 'audienceChart': audienceChart = instance; break;
-            case 'audienceComparisonChart': audienceComparisonChart = instance; break;
-            case 'fpSegmentsChart': fpSegmentsChart = instance; break;
-            case 'cnvSegmentsChart': cnvSegmentsChart = instance; break;
-            case 'impressionsAndCTRChart': impressionsAndCTRChart = instance; break;
-            case 'revenueAndConversionsChart': revenueAndConversionsChart = instance; break;
-        }
-    },
-    
-    getChartInstance: (name) => {
-        switch(name) {
-            case 'timeSeriesChart': return timeSeriesChart;
-            case 'audienceChart': return audienceChart;
-            case 'audienceComparisonChart': return audienceComparisonChart;
-            case 'fpSegmentsChart': return fpSegmentsChart;
-            case 'cnvSegmentsChart': return cnvSegmentsChart;
-            case 'impressionsAndCTRChart': return impressionsAndCTRChart;
-            case 'revenueAndConversionsChart': return revenueAndConversionsChart;
-            default: return null;
-        }
-    }
-};
