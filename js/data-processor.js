@@ -96,7 +96,10 @@ function processData(rawData) {
 
         // Convert relevant metrics to numbers
         // Convert relevant metrics to numbers and Date to Date object
-        processedRow.Date = row.Date.replace(/\//g, '-'); // Convert YYYY/MM/DD to YYYY-MM-DD
+        // Convert YYYY/MM/DD to YYYY-MM-DD and validate date
+        const dateStr = row.Date.replace(/\//g, '-');
+        const dateObj = new Date(dateStr + 'T00:00:00'); // Append time to ensure correct parsing
+        processedRow.Date = isNaN(dateObj.getTime()) ? null : dateStr;
         processedRow['Revenue (Advertiser Currency)'] = parseFloat(row['Revenue (Advertiser Currency)']) || 0;
         processedRow.Impressions = parseInt(row.Impressions) || 0;
         processedRow.Click = parseInt(row.Click) || 0;

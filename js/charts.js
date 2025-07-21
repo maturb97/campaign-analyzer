@@ -10,7 +10,7 @@ console.log('charts.js loaded');
 function aggregateDailyData(data) {
     const dailyData = {};
 
-    data.forEach(row => {
+    data.filter(row => row.Date).forEach(row => {
         const date = row.Date; // Assuming Date is in YYYY-MM-DD format
         if (!dailyData[date]) {
             dailyData[date] = {
@@ -46,7 +46,7 @@ function aggregateDailyData(data) {
 function aggregateWeeklyData(data) {
     const weeklyData = {};
 
-    data.forEach(row => {
+    data.filter(row => row.Date).forEach(row => {
         const date = new Date(row.Date + 'T00:00:00'); // Ensure date is parsed correctly as UTC to avoid timezone issues
         const day = date.getDay(); // 0 for Sunday, 1 for Monday, ..., 6 for Saturday
         const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday of the current week
