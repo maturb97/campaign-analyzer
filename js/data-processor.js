@@ -96,7 +96,7 @@ function processData(rawData) {
 
         // Convert relevant metrics to numbers
         // Convert relevant metrics to numbers and Date to Date object
-        processedRow.Date = row.Date; // Keep as string for filtering, but ensure it's in YYYY-MM-DD format
+        processedRow.Date = row.Date.replace(/\//g, '-'); // Convert YYYY/MM/DD to YYYY-MM-DD
         processedRow['Revenue (Advertiser Currency)'] = parseFloat(row['Revenue (Advertiser Currency)']) || 0;
         processedRow.Impressions = parseInt(row.Impressions) || 0;
         processedRow.Click = parseInt(row.Click) || 0;
